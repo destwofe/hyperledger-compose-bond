@@ -21,7 +21,6 @@ namespace org.tbma
 participant Account identified by email {
   o String email
   o String name
-  o Double balance
 }
 
 enum Period {
@@ -36,6 +35,12 @@ concept PaymentFrequency {
   o Period period
 }
 
+asset MoneyWallet identified by id {
+  o String id
+  --> Account owner
+  o Double balance
+}
+
 asset Bond identified by symbole {
   o String symbole
   o Double parValue
@@ -44,38 +49,47 @@ asset Bond identified by symbole {
   o DateTime maturity
   o Double totalSupply
   --> Account issuer
+  --> MoneyWallet issuerMoneyWallet
 }
 
-asset BondWallet identified by bondwalletId {
-  o String bondwalletId
+asset BondWallet identified by id {
+  o String id
   --> Bond bond
-  --> Account account
-  o Double amount
+  --> Account owner
+  o Double balance
+  --> MoneyWallet couponWallet
 }
 
 transaction SetupDemo {
 }
 
-transaction BondTransfer {
+transaction MoneyTransferTransaction {
+  --> MoneyWallet from
+  --> MoneyWallet to
+  o Double amount
+}
+
+transaction BondTransferTransaction {
   --> Bond bond
   --> BondWallet from
   --> BondWallet to
-  o Double amount
+  o Double balance
 }
 
-transaction Purchase {
+transaction BondPurchaseTransaction {
   --> Bond bond
-  --> Account investor // TODO
+  --> MoneyWallet investorMoneyWallet
+  --> BondWallet investorBondWallet
   o Double amount
 }
 
-transaction CouponPayout {
+transaction CouponPayoutTransaction {
   --> Bond bond
 }
 
 event MoneyTransferEvent {
-  --> Account from
-  --> Account to
+  --> MoneyWallet from
+  --> MoneyWallet to
   o Double amount
 }
 
@@ -83,6 +97,12 @@ event BondTransferEvent {
   --> Bond bond
   --> BondWallet from
   --> BondWallet to
+  o Double amount
+}
+
+event BondPurchaseEvent {
+  --> Bond bond
+  --> Account investor
   o Double amount
 }
 

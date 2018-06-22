@@ -16,5 +16,5 @@ query bondWalletByHolder {
   description: "select one bond wallet by bond holder"
   statement: 
     SELECT org.tbma.BondWallet
-      WHERE (bond==_$bond AND account ==_$account) 
+      WHERE (bond==_$bond AND owner ==_$owner) 
 }

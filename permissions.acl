@@ -15,10 +15,11 @@
 // View Participante and Asset
 
 rule PersonCanReadAllProfile {
-  description: "Allow Persons read access to other Persons"
-  participant: "org.tbma.Account"
+  description: "Allow Persons read access there account"
+  participant(p): "org.tbma.Account"
   operation: READ
-  resource: "org.tbma.Account"
+  resource(r): "org.tbma.Account"
+  condition: (p.getIdentifier() === r.getIdentifier())
   action: ALLOW
 }
 
@@ -31,32 +32,106 @@ rule PersonCanReadAllBond {
 }
 
 rule PersonCanReadAllBondWallet {
-  description: "Allow Persons read access to all bond wallet"
-  participant: "org.tbma.Account"
+  description: "Allow Persons read access there bond wallet"
+  participant(p): "org.tbma.Account"
   operation: READ
-  resource: "org.tbma.BondWallet"
+  resource(r): "org.tbma.BondWallet"
+  condition: (p.getIdentifier() === r.owner.getIdentifier())
   action: ALLOW
 }
 
-// Update Value By Transaction
-
-rule ParticipantCanUpdateBondWalletByTansaction {
-  description: "ParticipantCanUpdateBondWalletByTansaction"
+rule PersonCanReadAllMoneyWallet {
+  description: "Allow Persons read access there money wallet"
   participant(p): "org.tbma.Account"
-  operation: READ, UPDATE
+  operation: READ
+  resource(r): "org.tbma.MoneyWallet"
+  condition: (p.getIdentifier() === r.owner.getIdentifier())
+  action: ALLOW
+}
+
+// Asset Creation
+rule ParticipantCanCreateBondWallet {
+  description: "Allow Participant can create Empty BondWallet"
+  participant(p): "org.tbma.Account"
+  operation: CREATE
   resource(r): "org.tbma.BondWallet"
-  transaction(tx): "org.tbma.BondTransfer"
-  condition: (p.getIdentifier() === tx.from.account.getIdentifier())
+  condition: (r.balance === 0 && p.getIdentifier() === r.owner.getIdentifier())
   action: ALLOW
 }
 
 // Create Transaction
-
-rule EverybodyCanCreateTransfer {
-  description: "Allow all participants to submit BondTransfer transactions"
+rule AccountCreateMoneyTransferTransaction {
+  description: "Allow account to create money transfer transactions"
   participant: "org.tbma.Account"
   operation: CREATE
-  resource: "org.tbma.BondTransfer"
+  resource: "org.tbma.MoneyTransferTransaction"
+  action: ALLOW
+}
+
+rule AccountCreateBondTransferTransaction {
+  description: "Allow account to create bond transfer transactions"
+  participant: "org.tbma.Account"
+  operation: CREATE
+  resource: "org.tbma.BondTransferTransaction"
+  action: ALLOW
+}
+
+rule AccountCreateBondPurchaseTransaction {
+  description: "Allow account to create bond purchase transactions"
+  participant: "org.tbma.Account"
+  operation: CREATE
+  resource: "org.tbma.BondPurchaseTransaction"
+  action: ALLOW
+}
+
+// Update Via Transaction
+rule AccountUpdateMoneyWalletViaMoneyTransferTransaction {
+  description: "Allow account to update money wallet via money transfer transaction"
+  participant(p): "org.tbma.Account"
+  operation: UPDATE, READ
+  resource: "org.tbma.MoneyWallet"
+  transaction(tx): "org.tbma.MoneyTransferTransaction"
+  condition: (p.getIdentifier() === tx.from.owner.getIdentifier())
+  action: ALLOW
+}
+
+rule AccountUpdateBondWalletViaBondTransferTransaction {
+  description: "Allow account to update money wallet via money transfer transaction"
+  participant(p): "org.tbma.Account"
+  operation: UPDATE, READ
+  resource: "org.tbma.BondWallet"
+  transaction(tx): "org.tbma.BondTransferTransaction"
+  condition: (p.getIdentifier() === tx.from.owner.getIdentifier())
+  action: ALLOW
+}
+
+rule AccountUpdateBondViaBondPurchaseTransaction {
+  description: "Allow account to update bond via bond purchase transaction"
+  participant(p): "org.tbma.Account"
+  operation: UPDATE, READ
+  resource: "org.tbma.Bond"
+  transaction(tx): "org.tbma.BondPurchaseTransaction"
+  condition: (p.getIdentifier() === tx.investorMoneyWallet.owner.getIdentifier())
+  action: ALLOW
+}
+
+rule AccountUpdateBondWalletViaBondPurchaseTransaction {
+  description: "Allow account to update bond wallet via bond purchase transaction"
+  participant(p): "org.tbma.Account"
+  operation: UPDATE, READ
+  resource: "org.tbma.BondWallet"
+  transaction(tx): "org.tbma.BondPurchaseTransaction"
+  condition: (p.getIdentifier() === tx.investorMoneyWallet.owner.getIdentifier())
+  action: ALLOW
+}
+
+rule AccountUpdateMoneyWalletViaBondPurchaseTransaction {
+  description: "Allow account to update money wallet via bond purchase transaction"
+  participant(p): "org.tbma.Account"
+  operation: UPDATE, READ
+  resource: "org.tbma.MoneyWallet"
+  transaction(tx): "org.tbma.BondPurchaseTransaction"
+  condition: (p.getIdentifier() === tx.investorMoneyWallet.owner.getIdentifier())
   action: ALLOW
 }
 
@@ -87,128 +162,3 @@ rule NetworkAdminSystem {
     resource: "org.hyperledger.composer.system.**"
     action: ALLOW
 }
-
-
-// /**
-//  * Fund clearing access control list.
-//  */
-
-// rule ParticipantsRestrictionOnTransferRequest {
-//     description: "Only allow participants involved with an Asset to interact with it"
-//     participant(p): "org.clearing.BankingParticipant"
-//     operation: ALL
-//     resource(r): "org.clearing.TransferRequest"
-//     condition: (partyWithinTransferRequest(r, p))
-//     action: ALLOW
-// }
-
-// rule ParticipantsRestrictionOnTransferRequest2 {
-//     description: "Only allow participants involved with an Asset to interact with it"
-//     participant(p): "org.clearing.BankingParticipant"
-//     operation: ALL
-//     resource(r): "org.clearing.TransferRequest"
-//     condition: (!partyWithinTransferRequest(r, p))
-//     action: DENY
-// }
-
-// rule ParticipantsRestrictionOnBatchTransferRequest {
-//     description: "Allow participants involved with an Asset to interact with it"
-//     participant(p): "org.clearing.BankingParticipant"
-//     operation: ALL
-//     resource(r): "org.clearing.BatchTransferRequest"
-//     condition: (partyWithinBatchTransferRequest(r, p))
-//     action: ALLOW
-// }
-
-// rule ParticipantsRestrictionOnBatchTransferRequest2 {
-//     description: "Prevent participants not involved with an Asset from interacting with it"
-//     participant(p): "org.clearing.BankingParticipant"
-//     operation: ALL
-//     resource(r): "org.clearing.BatchTransferRequest"
-//     condition: (!partyWithinBatchTransferRequest(r, p))
-//     action: DENY
-// }
-
-// rule ParticipantsCanSeeOtherParticipants {
-//     description: "Allow all participants to see others"
-//     participant: "org.clearing.BankingParticipant"
-//     operation: READ
-//     resource: "org.clearing.BankingParticipant"
-//     action: ALLOW
-// }
-
-// rule EverybodyCanCreateBatches {
-//     description: "Allow all participants to submit CreateBatch transactions"
-//     participant: "org.clearing.BankingParticipant"
-//     operation: CREATE
-//     resource: "org.clearing.CreateBatch"
-//     action: ALLOW
-// }
-
-// rule EverybodyCanSubmitTransferequests {
-//     description: "Allow all participants to submit SubmitTransferRequest transactions"
-//     participant: "org.clearing.BankingParticipant"
-//     operation: CREATE
-//     resource: "org.clearing.SubmitTransferRequest"
-//     action: ALLOW
-// }
-
-// rule EverybodyCanMarkPreProcessComplete {
-//     description: "Everybody allowed to submit MarkPreProcessComplete transactions"
-//     participant: "org.clearing.BankingParticipant"
-//     operation: ALL
-//     resource: "org.clearing.MarkPreProcessComplete"
-//     action: ALLOW
-// }
-
-// rule EverybodyCanCompleteSettlements {
-//     description: "Everybody allowed to submit CompleteSettlement transactions"
-//     participant: "org.clearing.BankingParticipant"
-//     operation: ALL
-//     resource: "org.clearing.CompleteSettlement"
-//     action: ALLOW
-// }
-
-// rule ParticipantsCanUpdateFunds {
-//     description: "Only allow involved participants to submit CompleteSettlement transactions"
-//     participant: "org.clearing.BankingParticipant"
-//     operation: UPDATE
-//     resource: "org.clearing.BankingParticipant"
-//     action: ALLOW
-// }
-
-// rule EverybodyCanMarkPostProcessComplete {
-//     description: "Everybody allowed to submit MarkPostProcessComplete transactions"
-//     participant: "org.clearing.BankingParticipant"
-//     operation: ALL
-//     resource: "org.clearing.MarkPostProcessComplete"
-//     action: ALLOW
-// }
-
-// /**
-//  * Required System Rules
-//  */
-
-// rule SystemACL {
-//   description:  "System ACL to permit all access"
-//   participant: "org.hyperledger.composer.system.Participant"
-//   operation: ALL
-//   resource: "org.hyperledger.composer.system.**"
-//   action: ALLOW
-// }
-
-// rule NetworkAdminUser {
-//     description: "Grant business network administrators full access to user resources"
-//     participant: "org.hyperledger.composer.system.NetworkAdmin"
-//     operation: ALL
-//     resource: "**"
-//     action: ALLOW
-// }
-
-// rule NetworkAdminSystem {
-//     description: "Grant business network administrators full access to system resources"
-//     participant: "org.hyperledger.composer.system.NetworkAdmin"
-//     operation: ALL
-//     resource: "org.hyperledger.composer.system.**"
-//     action: ALLOW
-// }
