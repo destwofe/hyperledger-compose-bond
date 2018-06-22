@@ -1,0 +1,97 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * Write your model definitions here
+ */
+
+namespace org.tbma
+
+participant Account identified by email {
+  o String email
+  o String name
+  o Double balance
+}
+
+enum Period {
+  o DAY
+  o WEEK
+  o MONTH
+  o YEAR
+}
+
+concept PaymentFrequency {
+  o Integer periodMultipier
+  o Period period
+}
+
+asset Bond identified by symbole {
+  o String symbole
+  o Double parValue
+  o Double couponRate
+  o PaymentFrequency paymentFrequency
+  o DateTime maturity
+  o Double totalSupply
+  --> Account issuer
+}
+
+asset BondWallet identified by bondwalletId {
+  o String bondwalletId
+  --> Bond bond
+  --> Account account
+  o Double amount
+}
+
+transaction SetupDemo {
+}
+
+transaction BondTransfer {
+  --> Bond bond
+  --> BondWallet from
+  --> BondWallet to
+  o Double amount
+}
+
+transaction Purchase {
+  --> Bond bond
+  --> Account investor // TODO
+  o Double amount
+}
+
+transaction CouponPayout {
+  --> Bond bond
+}
+
+event MoneyTransferEvent {
+  --> Account from
+  --> Account to
+  o Double amount
+}
+
+event BondTransferEvent {
+  --> Bond bond
+  --> BondWallet from
+  --> BondWallet to
+  o Double amount
+}
+
+event CouponPayOutEvent {
+  --> Bond bond
+  --> Account account
+  o Double amount
+}
+
+event LogEvent {
+  o String message
+}

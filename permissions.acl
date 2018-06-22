@@ -1,0 +1,214 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// View Participante and Asset
+
+rule PersonCanReadAllProfile {
+  description: "Allow Persons read access to other Persons"
+  participant: "org.tbma.Account"
+  operation: READ
+  resource: "org.tbma.Account"
+  action: ALLOW
+}
+
+rule PersonCanReadAllBond {
+  description: "Allow Persons read access to all bond"
+  participant: "org.tbma.Account"
+  operation: READ
+  resource: "org.tbma.Bond"
+  action: ALLOW
+}
+
+rule PersonCanReadAllBondWallet {
+  description: "Allow Persons read access to all bond wallet"
+  participant: "org.tbma.Account"
+  operation: READ
+  resource: "org.tbma.BondWallet"
+  action: ALLOW
+}
+
+// Update Value By Transaction
+
+rule ParticipantCanUpdateBondWalletByTansaction {
+  description: "ParticipantCanUpdateBondWalletByTansaction"
+  participant(p): "org.tbma.Account"
+  operation: READ, UPDATE
+  resource(r): "org.tbma.BondWallet"
+  transaction(tx): "org.tbma.BondTransfer"
+  condition: (p.getIdentifier() === tx.from.account.getIdentifier())
+  action: ALLOW
+}
+
+// Create Transaction
+
+rule EverybodyCanCreateTransfer {
+  description: "Allow all participants to submit BondTransfer transactions"
+  participant: "org.tbma.Account"
+  operation: CREATE
+  resource: "org.tbma.BondTransfer"
+  action: ALLOW
+}
+
+// System
+
+ rule SystemACL {
+  description:  "System ACL to permit all access"
+  participant: "org.hyperledger.composer.system.Participant"
+  operation: ALL
+  resource: "org.hyperledger.composer.system.**"
+  action: ALLOW
+}
+
+// Network
+
+rule NetworkAdminUser {
+    description: "Grant business network administrators full access to user resources"
+    participant: "org.hyperledger.composer.system.NetworkAdmin"
+    operation: ALL
+    resource: "**"
+    action: ALLOW
+}
+
+rule NetworkAdminSystem {
+    description: "Grant business network administrators full access to system resources"
+    participant: "org.hyperledger.composer.system.NetworkAdmin"
+    operation: ALL
+    resource: "org.hyperledger.composer.system.**"
+    action: ALLOW
+}
+
+
+// /**
+//  * Fund clearing access control list.
+//  */
+
+// rule ParticipantsRestrictionOnTransferRequest {
+//     description: "Only allow participants involved with an Asset to interact with it"
+//     participant(p): "org.clearing.BankingParticipant"
+//     operation: ALL
+//     resource(r): "org.clearing.TransferRequest"
+//     condition: (partyWithinTransferRequest(r, p))
+//     action: ALLOW
+// }
+
+// rule ParticipantsRestrictionOnTransferRequest2 {
+//     description: "Only allow participants involved with an Asset to interact with it"
+//     participant(p): "org.clearing.BankingParticipant"
+//     operation: ALL
+//     resource(r): "org.clearing.TransferRequest"
+//     condition: (!partyWithinTransferRequest(r, p))
+//     action: DENY
+// }
+
+// rule ParticipantsRestrictionOnBatchTransferRequest {
+//     description: "Allow participants involved with an Asset to interact with it"
+//     participant(p): "org.clearing.BankingParticipant"
+//     operation: ALL
+//     resource(r): "org.clearing.BatchTransferRequest"
+//     condition: (partyWithinBatchTransferRequest(r, p))
+//     action: ALLOW
+// }
+
+// rule ParticipantsRestrictionOnBatchTransferRequest2 {
+//     description: "Prevent participants not involved with an Asset from interacting with it"
+//     participant(p): "org.clearing.BankingParticipant"
+//     operation: ALL
+//     resource(r): "org.clearing.BatchTransferRequest"
+//     condition: (!partyWithinBatchTransferRequest(r, p))
+//     action: DENY
+// }
+
+// rule ParticipantsCanSeeOtherParticipants {
+//     description: "Allow all participants to see others"
+//     participant: "org.clearing.BankingParticipant"
+//     operation: READ
+//     resource: "org.clearing.BankingParticipant"
+//     action: ALLOW
+// }
+
+// rule EverybodyCanCreateBatches {
+//     description: "Allow all participants to submit CreateBatch transactions"
+//     participant: "org.clearing.BankingParticipant"
+//     operation: CREATE
+//     resource: "org.clearing.CreateBatch"
+//     action: ALLOW
+// }
+
+// rule EverybodyCanSubmitTransferequests {
+//     description: "Allow all participants to submit SubmitTransferRequest transactions"
+//     participant: "org.clearing.BankingParticipant"
+//     operation: CREATE
+//     resource: "org.clearing.SubmitTransferRequest"
+//     action: ALLOW
+// }
+
+// rule EverybodyCanMarkPreProcessComplete {
+//     description: "Everybody allowed to submit MarkPreProcessComplete transactions"
+//     participant: "org.clearing.BankingParticipant"
+//     operation: ALL
+//     resource: "org.clearing.MarkPreProcessComplete"
+//     action: ALLOW
+// }
+
+// rule EverybodyCanCompleteSettlements {
+//     description: "Everybody allowed to submit CompleteSettlement transactions"
+//     participant: "org.clearing.BankingParticipant"
+//     operation: ALL
+//     resource: "org.clearing.CompleteSettlement"
+//     action: ALLOW
+// }
+
+// rule ParticipantsCanUpdateFunds {
+//     description: "Only allow involved participants to submit CompleteSettlement transactions"
+//     participant: "org.clearing.BankingParticipant"
+//     operation: UPDATE
+//     resource: "org.clearing.BankingParticipant"
+//     action: ALLOW
+// }
+
+// rule EverybodyCanMarkPostProcessComplete {
+//     description: "Everybody allowed to submit MarkPostProcessComplete transactions"
+//     participant: "org.clearing.BankingParticipant"
+//     operation: ALL
+//     resource: "org.clearing.MarkPostProcessComplete"
+//     action: ALLOW
+// }
+
+// /**
+//  * Required System Rules
+//  */
+
+// rule SystemACL {
+//   description:  "System ACL to permit all access"
+//   participant: "org.hyperledger.composer.system.Participant"
+//   operation: ALL
+//   resource: "org.hyperledger.composer.system.**"
+//   action: ALLOW
+// }
+
+// rule NetworkAdminUser {
+//     description: "Grant business network administrators full access to user resources"
+//     participant: "org.hyperledger.composer.system.NetworkAdmin"
+//     operation: ALL
+//     resource: "**"
+//     action: ALLOW
+// }
+
+// rule NetworkAdminSystem {
+//     description: "Grant business network administrators full access to system resources"
+//     participant: "org.hyperledger.composer.system.NetworkAdmin"
+//     operation: ALL
+//     resource: "org.hyperledger.composer.system.**"
+//     action: ALLOW
+// }

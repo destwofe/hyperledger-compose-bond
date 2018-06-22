@@ -1,0 +1,20 @@
+
+query queryBondHolderByBond {
+  description: "select all bond holder by bond"
+  statement:
+    SELECT org.tbma.BondWallet
+      WHERE (bond==_$bond)
+}
+
+query queryAllBondWallet {
+  description: "select all bond holder by bond"
+  statement:
+    SELECT org.tbma.BondWallet
+}
+
+query bondWalletByHolder {
+  description: "select one bond wallet by bond holder"
+  statement: 
+    SELECT org.tbma.BondWallet
+      WHERE (bond==_$bond AND account ==_$account) 
+}
