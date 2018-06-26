@@ -50,11 +50,29 @@ rule PersonCanReadAllMoneyWallet {
 }
 
 // Asset Creation
+rule ParticipantCanCreateBond {
+  description: "Allow Participant can create Bond"
+  participant(p): "org.tbma.Account"
+  operation: CREATE
+  resource(r): "org.tbma.Bond"
+  condition: (r.totalSupply === 0 && p.getIdentifier() === r.issuer.getIdentifier() && p.getIdentifier() === r.issuerMoneyWallet.owner.getIdentifier())
+  action: ALLOW
+}
+
 rule ParticipantCanCreateBondWallet {
   description: "Allow Participant can create Empty BondWallet"
   participant(p): "org.tbma.Account"
   operation: CREATE
   resource(r): "org.tbma.BondWallet"
+  condition: (r.balance === 0 && p.getIdentifier() === r.owner.getIdentifier())
+  action: ALLOW
+}
+
+rule ParticipantCanCreateMoneyWallet {
+  description: "Allow Participant can create Empty MoneyWallet"
+  participant(p): "org.tbma.Account"
+  operation: CREATE
+  resource(r): "org.tbma.MoneyWallet"
   condition: (r.balance === 0 && p.getIdentifier() === r.owner.getIdentifier())
   action: ALLOW
 }

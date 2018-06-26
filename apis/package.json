@@ -1,0 +1,28 @@
+{
+  "name": "bond",
+  "version": "1.0.0",
+  "description": "hyperledger compose network rest api",
+  "main": "app.js",
+  "engines": {
+    "node": ">8.0.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "destwofe",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "composer-client": "^0.19.10",
+    "cors": "^2.8.4",
+    "express": "^4.16.3",
+    "morgan": "^1.9.0",
+    "uuid": "^3.2.1",
+    "winston": "^3.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^5.0.0",
+    "eslint-config-airbnb-base": "^13.0.0",
+    "eslint-plugin-import": "^2.13.0"
+  }
+}
