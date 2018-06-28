@@ -60,6 +60,35 @@ class BondNetwork {
     return this.submitTransaction({ $class: `${this.NS}.SetupDemo` })
   }
 
+  async MoneyTransferTransaction(from, to, amount) {
+    return this.submitTransaction({
+      $class: 'org.tbma.MoneyTransferTransaction',
+      from: `resource:org.tbma.MoneyWallet#${from}`,
+      to: `resource:org.tbma.MoneyWallet#${to}`,
+      amount,
+    })
+  }
+
+  async BondTransferTransaction({ bond, from, to, amount }) {
+    return this.submitTransaction({
+      $class: 'org.tbma.BondTransferTransaction',
+      bond: `resource:org.tbma.Bond#${bond}`,
+      from: `resource:org.tbma.BondWallet#${from}`,
+      to: `resource:org.tbma.BondWallet#${to}`,
+      amount,
+    })
+  }
+
+  async BondPurchaseTransaction({ bond, moneywallet, bondwallet, amount }) {
+    return this.submitTransaction({
+      $class: 'org.tbma.BondPurchaseTransaction',
+      bond: `resource:org.tbma.Bond#${bond}`,
+      investorBondWallet: `resource:org.tbma.BondWallet#${moneywallet}`,
+      investorMoneyWallet: `resource:org.tbma.MoneyWallet#${bondwallet}`,
+      amount,
+    })
+  }
+
   async getHistorians() {
     try {
       const historians = await this.historian.getAll()
@@ -72,7 +101,7 @@ class BondNetwork {
   async getEvents() {
     try {
       const historians = await this.getHistorians()
-      return historians.map(a => a.eventsEmitted)
+      return [].concat(...historians.map(a => a.eventsEmitted))
     } catch (error) {
       return Promise.reject(new Error(error.details))
     }
@@ -122,7 +151,7 @@ class BondNetwork {
     }
   }
 
-  async createBond({ symbole, couponRate, paymentMultipier, paymentPeroid, maturity, issuer, issuerMoneyWallet }) {
+  async createBond({ symbole, parValue, couponRate, paymentMultipier, paymentPeroid, maturity, issuer, issuerMoneyWallet }) {
     try {
       if (!argsIsExist(symbole, couponRate, paymentMultipier, paymentPeroid, maturity, issuer, issuerMoneyWallet)) return Promise.reject(new Error('missing required params'))
       const [bondAsset, ownerParti, couponwalletAsset] = await Promise.all([
@@ -132,7 +161,10 @@ class BondNetwork {
       if (!argsIsExist(ownerParti, couponwalletAsset)) return Promise.reject(new Error('asset is not found'))
 
       const paymentFrequency = this.factory.newConcept(this.NS, 'PaymentFrequency')
+      paymentFrequency.periodMultipier = paymentMultipier
+      paymentFrequency.period = paymentPeroid
       const bond = this.factory.newResource(this.NS, 'Bond', symbole)
+      bond.parValue = parValue
       bond.couponRate = couponRate
       bond.maturity = maturity
       bond.totalSupply = 0

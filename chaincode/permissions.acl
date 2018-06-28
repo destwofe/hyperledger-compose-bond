@@ -49,6 +49,15 @@ rule PersonCanReadAllMoneyWallet {
   action: ALLOW
 }
 
+rule IssuerCahReadBondHolderWallet {
+  description: "Allow Issuer read bond holder bond wallet"
+  participant(p): "org.tbma.Account"
+  operation: READ
+  resource(r): "org.tbma.BondWallet"
+  condition: (p.getIdentifier() === r.bond.issuer.getIdentifier())
+  action: ALLOW
+}
+
 // Asset Creation
 rule ParticipantCanCreateBond {
   description: "Allow Participant can create Bond"

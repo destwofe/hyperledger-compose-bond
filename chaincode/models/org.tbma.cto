@@ -73,7 +73,7 @@ transaction BondTransferTransaction {
   --> Bond bond
   --> BondWallet from
   --> BondWallet to
-  o Double balance
+  o Double amount
 }
 
 transaction BondPurchaseTransaction {

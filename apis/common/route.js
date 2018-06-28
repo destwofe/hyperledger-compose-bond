@@ -7,15 +7,14 @@ router.param('id', (req, res, next, id) => {
 })
 
 router.use('/', (req, res, next) => {
-  const resError = () => res.status(403).json({ error: 'autorize is required' })
+  const resError = (error = 'autorize is required') => res.status(403).json({ error })
 
   const bondNetwork = new BondNetwork()
   if (!req.headers.accesstoken) return resError()
-
   return bondNetwork.init(req.headers.accesstoken).then(() => {
     req.bondNetwork = bondNetwork;
     return next();
-  }).catch(() => resError())
+  }).catch(error => resError(error.toString()))
 })
 
 // router.post('/setupDemo', (req, res) => {
@@ -55,6 +54,19 @@ router.get('/bonds/:id', async (req, res) => {
   }
 })
 
+router.post('/bonds', async (req, res) => {
+  try {
+    const { bondNetwork, body: { symbole, parValue, couponRate, paymentMultipier, paymentPeroid, maturity, issuerMoneyWallet } } = req
+    const identity = await bondNetwork.getCardParticipantIdentity()
+    const identifier = identity.participant.$identifier
+    const bond = await bondNetwork.createBond({ symbole, parValue, couponRate, paymentMultipier, paymentPeroid, maturity: new Date(maturity), issuer: identifier, issuerMoneyWallet })
+
+    return res.json(bond)
+  } catch (error) {
+    return res.status(400).json({ error: error.message })
+  }
+})
+
 router.get('/bondwallets', async (req, res) => {
   const { bondNetwork } = req
   const bondwallets = await bondNetwork.getBondWallets()
@@ -73,8 +85,7 @@ router.get('/bondwallets/:id', async (req, res) => {
 
 router.post('/bondwallets', async (req, res) => {
   try {
-    const { bondNetwork } = req
-    const { bond, couponwallet } = req.body
+    const { bondNetwork, body: { bond, couponwallet } } = req
     const identity = await bondNetwork.getCardParticipantIdentity()
     const identifier = identity.participant.$identifier
     const bondWallet = await bondNetwork.createBondWallet({ bond, owner: identifier, couponwallet })
@@ -98,6 +109,49 @@ router.get('/moneywallets/:id', async (req, res) => {
     return res.json(moneywallets)
   } catch (error) {
     return res.status(404).json({ error: error.message })
+  }
+})
+
+router.post('/moneywallets', async (req, res) => {
+  try {
+    const { bondNetwork } = req
+    const identity = await bondNetwork.getCardParticipantIdentity()
+    const identifier = identity.participant.$identifier
+    const moneywallet = await bondNetwork.createMoneyWallet({ owner: identifier })
+
+    return res.json(moneywallet)
+  } catch (error) {
+    return res.status(400).json({ error: error.message })
+  }
+})
+
+router.post('/transaction/moneytransfer', async (req, res) => {
+  try {
+    const { bondNetwork, body: { from, to, amount } } = req
+    const moneyTransferResponse = await bondNetwork.MoneyTransferTransaction({ from, to, amount })
+    return res.json(moneyTransferResponse)
+  } catch (error) {
+    return res.status(400).json({ error: error.message })
+  }
+})
+
+router.post('/transaction/bondtransfer', async (req, res) => {
+  try {
+    const { bondNetwork, body: { bond, from, to, amount } } = req
+    const bondTransferResponse = await bondNetwork.BondTransferTransaction({ bond, from, to, amount })
+    return res.json(bondTransferResponse)
+  } catch (error) {
+    return res.status(400).json({ error: error.message })
+  }
+})
+
+router.post('/transaction/bondpurchase', async (req, res) => {
+  try {
+    const { bondNetwork, body: { bond, moneywallet, bondwallet, amount } } = req
+    const moneyTransferResponse = await bondNetwork.BondPurchaseTransaction({ bond, moneywallet, bondwallet, amount })
+    return res.json(moneyTransferResponse)
+  } catch (error) {
+    return res.status(400).json({ error: error.message })
   }
 })
 
