@@ -1,10 +1,11 @@
 import React, { Component } from 'react'
 import { Link } from 'react-router-dom'
 
-class Homepage extends Component {
-  constructor() {
-    super()
+import Axios from 'axios'
 
+class Homepage extends Component {
+  constructor(props) {
+    super()
     this.state = {
       accessToken: ''
     }
@@ -15,7 +16,14 @@ class Homepage extends Component {
   }
 
   saveSome = (event) => {
-    localStorage.setItem('accessToken', this.state.accessToken)
+    event.preventDefault()
+    Axios.get('http://localhost:3335/api/account', { headers: { accessToken:  this.state.accessToken} })
+      .then(response => {
+        localStorage.setItem('accessToken', this.state.accessToken)
+        localStorage.setItem('email', response.data.email)
+        localStorage.setItem('name', response.data.name)
+        window.location.reload()
+      }).catch(console.log)
   }
 
   renderLoginForm = () => {
@@ -30,7 +38,7 @@ class Homepage extends Component {
     }
     return (
       <form className="form-inline" onSubmit={this.saveSome}>
-        <input className="form-control mr-sm-2" type="password" placeholder="access token" onChange={(event) => this.onInputChange({ accessToken: event.target.value })} />
+        <input className="form-control mr-sm-2" type="text" placeholder="access token" onChange={(event) => this.onInputChange({ accessToken: event.target.value })} />
         <button className="btn btn-outline-success mr-sm-2" type="submit">Login</button>
       </form>
     )

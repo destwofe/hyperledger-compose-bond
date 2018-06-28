@@ -17,6 +17,18 @@ router.use('/', (req, res, next) => {
   }).catch(error => resError(error.toString()))
 })
 
+router.get('/account', async (req, res) => {
+  try {
+    const { bondNetwork } = req
+    const identity = await bondNetwork.getCardParticipantIdentity()
+    const identifier = identity.participant.$identifier
+    const account = await bondNetwork.getAccounts(identifier)
+    return res.json(account)
+  } catch (error) {
+    return res.status(400).json({ error: error.message })
+  }
+})
+
 // router.post('/setupDemo', (req, res) => {
 //   // const bn = new bondNetwork ()
 //   // bn.init('admin@bond').then(async () => {
@@ -68,7 +80,17 @@ router.post('/bonds', async (req, res) => {
 })
 
 router.get('/bondwallets', async (req, res) => {
-  const { bondNetwork } = req
+  const { bondNetwork, query: { filter, bond } } = req
+  if (filter && filter === 'owner') {
+    const identity = await bondNetwork.getCardParticipantIdentity()
+    const identifier = identity.participant.$identifier
+    const bondwallets = await bondNetwork.getBondWalletByOwner(identifier)
+    return res.json(bondwallets)
+  }
+  if (filter && filter === 'bond' && bond) {
+    const bondwallets = await bondNetwork.getBondWalletByBond(bond)
+    return res.json(bondwallets)
+  }
   const bondwallets = await bondNetwork.getBondWallets()
   return res.json(bondwallets)
 })
@@ -150,6 +172,16 @@ router.post('/transaction/bondpurchase', async (req, res) => {
     const { bondNetwork, body: { bond, moneywallet, bondwallet, amount } } = req
     const moneyTransferResponse = await bondNetwork.BondPurchaseTransaction({ bond, moneywallet, bondwallet, amount })
     return res.json(moneyTransferResponse)
+  } catch (error) {
+    return res.status(400).json({ error: error.message })
+  }
+})
+
+router.post('/transaction/couponpayout', async (req, res) => {
+  try {
+    const { bondNetwork, body: { bond, moneyWallet } } = req
+    const couponPayoutTransactionResponse = await bondNetwork.CouponPayoutTransaction({ bond, moneyWallet })
+    return res.json(couponPayoutTransactionResponse)
   } catch (error) {
     return res.status(400).json({ error: error.message })
   }

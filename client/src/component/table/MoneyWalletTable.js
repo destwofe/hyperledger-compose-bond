@@ -31,7 +31,7 @@ class MoneyWallet extends Component {
       return this.state.moneyWallets.map((moneyWallet) => (
         <tr key={moneyWallet.id}>
           <th>{moneyWallet.id}</th>
-          <td>{moneyWallet.balance}</td>
+          <td className="text-right">{Number(moneyWallet.balance).toLocaleString()} THB</td>
           <td><button className="btn btn-outline-dark" onClick={() => this.setState({ isModalOpen: true, transferFrom: moneyWallet.id })}>transfer</button></td>
         </tr>
       ))

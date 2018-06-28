@@ -89,6 +89,15 @@ class BondNetwork {
     })
   }
 
+  async CouponPayoutTransaction({ moneyWallet, bond }) {
+    console.log({moneyWallet, bond})
+    return this.submitTransaction({
+      $class: 'org.tbma.CouponPayoutTransaction',
+      bond: `resource:org.tbma.Bond#${bond}`,
+      moneyWallet: `resource:org.tbma.MoneyWallet#${moneyWallet}`,
+    })
+  }
+
   async getHistorians() {
     try {
       const historians = await this.historian.getAll()
@@ -135,6 +144,22 @@ class BondNetwork {
       if (!id) return bondWalletRegistry.getAll()
       if (await bondWalletRegistry.exists(id)) return bondWalletRegistry.get(id)
       return undefined
+    } catch (error) {
+      return Promise.reject(new Error(error.details))
+    }
+  }
+
+  async getBondWalletByOwner(owner) {
+    try {
+      return this.connection.query('bondWalletByHolder', { owner: `resource:org.tbma.Account#${owner}` })
+    } catch (error) {
+      return Promise.reject(new Error(error.details))
+    }
+  }
+
+  async getBondWalletByBond(bond) {
+    try {
+      return this.connection.query('bondWalletByBond', { bond: `resource:org.tbma.Bond#${bond}` })
     } catch (error) {
       return Promise.reject(new Error(error.details))
     }

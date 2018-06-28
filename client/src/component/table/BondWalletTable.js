@@ -14,11 +14,19 @@ class BondWallet extends Component {
   }
 
   fetchBondWallet = () => {
-    Axios.get('http://localhost:3335/api/bondwallets', { headers: { accessToken: this.state.accessToken } })
-      .then((response) => {
-        this.setState({ bondwallets: response.data })
-      })
-      .catch(console.log)
+    if (this.props.bond) {
+      Axios.get(`http://localhost:3335/api/bondwallets?filter=bond&&bond=${this.props.bond}`, { headers: { accessToken: this.state.accessToken } })
+        .then((response) => {
+          this.setState({ bondwallets: response.data })
+        })
+        .catch(console.log)
+    } else {
+      Axios.get('http://localhost:3335/api/bondwallets?filter=owner', { headers: { accessToken: this.state.accessToken } })
+        .then((response) => {
+          this.setState({ bondwallets: response.data })
+        })
+        .catch(console.log)
+    }
   }
 
   modalToggle = (isReloadData) => {
@@ -32,7 +40,7 @@ class BondWallet extends Component {
         <tr key={item.id}>
           <th>{item.id}</th>
           <th><a href={`/bonds/${item.bond.replace(/resource:org.tbma.Bond#/g, '')}`}>{item.bond.replace(/resource:org.tbma.Bond#/g, '')}</a></th>
-          <td>{item.balance}</td>
+          <td className="text-right">{Number(item.balance).toLocaleString()} unit</td>
           <td><button className="btn btn-outline-dark" onClick={() => this.setState({ isModalOpen: true, transferFrom: item.id, transferBond: item.bond.replace(/resource:org.tbma.Bond#/g, '') })}>transfer</button></td>
         </tr>
       ))

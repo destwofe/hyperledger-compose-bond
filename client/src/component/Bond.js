@@ -4,9 +4,9 @@ import IssueBondModal from './modal/IssueBondModal'
 
 class Bond extends Component {
   constructor(props) {
-    super()
+    super(props)
     this.state = {
-      isModalOpen: true
+      isModalOpen: false
     }
 
     this.child = React.createRef()
@@ -20,8 +20,8 @@ class Bond extends Component {
   render() {
     return (
       <div>
-        <button className="btn btn-primary my-2 mx-2" onClick={() => { this.modalToggle() }}>Create Bond Wallet</button>
-        <BondTable ref={this.child} />
+        <button className="btn btn-primary my-2 mx-2" onClick={() => { this.modalToggle() }}>Issue new Bond</button>
+        <BondTable ref={this.child} history={this.props.history} />
         <IssueBondModal isOpen={this.state.isModalOpen} toggle={this.modalToggle} />
       </div>
     )

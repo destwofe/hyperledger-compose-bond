@@ -5,7 +5,7 @@ import Home from './Home'
 import Bonds from './Bond'
 import MoneyWallet from './wallet/MoneyWallet'
 import BondWallet from './wallet/BondWallet'
-import BondDetails from './BondDetails'
+import BondDetails from './detail/BondDetails'
 
 const isLogin = () => localStorage.getItem('accessToken') != null
 
