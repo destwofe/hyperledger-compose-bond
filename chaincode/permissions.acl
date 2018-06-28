@@ -111,6 +111,14 @@ rule AccountCreateBondPurchaseTransaction {
   action: ALLOW
 }
 
+rule AccountCreateCouponPayoutTransaction {
+  description: "Allow accoint to create coupon payout transaction"
+  participant: "org.tbma.Account"
+  operation: CREATE
+  resource: "org.tbma.CouponPayoutTransaction"
+  action: ALLOW
+}
+
 // Update Via Transaction
 rule AccountUpdateMoneyWalletViaMoneyTransferTransaction {
   description: "Allow account to update money wallet via money transfer transaction"
@@ -159,6 +167,16 @@ rule AccountUpdateMoneyWalletViaBondPurchaseTransaction {
   resource: "org.tbma.MoneyWallet"
   transaction(tx): "org.tbma.BondPurchaseTransaction"
   condition: (p.getIdentifier() === tx.investorMoneyWallet.owner.getIdentifier())
+  action: ALLOW
+}
+
+rule AccountUpdateMoneyWalletViaCouponPayoutTransaction {
+  description: "Allow account to update money wallet via coupon payout transaction"
+  participant(p): "org.tbma.Account"
+  operation: UPDATE, READ
+  resource: "org.tbma.MoneyWallet"
+  transaction(tx): "org.tbma.CouponPayoutTransaction"
+  condition: (p.getIdentifier() === tx.bond.issuer.getIdentifier() && p.getIdentifier() === tx.moneyWallet.owner.getIdentifier())
   action: ALLOW
 }
 

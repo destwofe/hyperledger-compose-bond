@@ -37,7 +37,7 @@ async function setupDemo(setupDemo) {
 
   // create money wallet
   const issuerAMoneyWallet = factory.newResource(NS, 'MoneyWallet', 'issuerAMoneyWallet')
-  issuerAMoneyWallet.owner = factory.newRelationship(NS, 'Account', 'IssuerA@email.com')
+  issuerAMoneyWallet.owner = factory.newRelationship(NS, 'Account', 'issuerA@email.com')
   issuerAMoneyWallet.balance = 100000000
 
   const investorAMoneyWallet = factory.newResource(NS, 'MoneyWallet', 'investorAMoneyWallet')
@@ -207,10 +207,10 @@ async function CouponPayoutTransaction(tx) {
   const factory = getFactory()
 
   const moneyWalletRegistry = await getAssetRegistry(`${NS}.MoneyWallet`)
-  const bondWallets = await query('queryBondHolderByBond', { bond: `resource:org.tbma.Bond#${tx.bond.symbole}` })
+  const bondWallets = await query('bondWalletByBond', { bond: `resource:org.tbma.Bond#${tx.bond.symbole}` })
   await Promise.all(bondWallets.map(async (bondWallet) => {
     const bond = tx.bond
-    const issuerMoneyWallet = bond.issuerMoneyWallet
+    const issuerMoneyWallet = tx.moneyWallet
     const couponAmount = bondWallet.balance * bond.parValue * bond.couponRate / 100.0
 
     // emit event

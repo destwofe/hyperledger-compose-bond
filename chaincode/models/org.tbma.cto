@@ -85,6 +85,7 @@ transaction BondPurchaseTransaction {
 
 transaction CouponPayoutTransaction {
   --> Bond bond
+  --> MoneyWallet moneyWallet
 }
 
 event MoneyTransferEvent {
