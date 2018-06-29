@@ -29,6 +29,16 @@ router.get('/account', async (req, res) => {
   }
 })
 
+router.post('/account', async (req, res) => {
+  try {
+    const { bondNetwork, body: { email, name } } = req
+    const response = await bondNetwork.createAccount({ email, name })
+    return res.json(response)
+  } catch (error) {
+    return res.status(400).json({ error: error.message })
+  }
+})
+
 router.post('/setupDemo', async (req, res) => {
   try {
     const { bondNetwork } = req

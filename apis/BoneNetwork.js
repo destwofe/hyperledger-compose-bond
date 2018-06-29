@@ -175,6 +175,18 @@ class BondNetwork {
     }
   }
 
+  async createAccount({ email, name }) {
+    try {
+      const account = this.factory.newResource(this.NS, 'Account', email)
+      account.name = name
+      const accountRegistry = await this.connection.getParticipantRegistry(`${this.NS}.Account`)
+      accountRegistry.add(account)
+      return Promise.resolve({ account: this.serializer.toJSON(account) })
+    } catch (error) {
+      return Promise.reject(error)
+    }
+  }
+
   async createBond({ symbole, parValue, couponRate, paymentMultipier, paymentPeroid, maturity, issuer, issuerMoneyWallet }) {
     try {
       if (!argsIsExist(symbole, couponRate, paymentMultipier, paymentPeroid, maturity, issuer, issuerMoneyWallet)) return Promise.reject(new Error('missing required params'))
