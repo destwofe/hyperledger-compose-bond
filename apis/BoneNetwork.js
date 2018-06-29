@@ -90,7 +90,6 @@ class BondNetwork {
   }
 
   async CouponPayoutTransaction({ moneyWallet, bond }) {
-    console.log({moneyWallet, bond})
     return this.submitTransaction({
       $class: 'org.tbma.CouponPayoutTransaction',
       bond: `resource:org.tbma.Bond#${bond}`,

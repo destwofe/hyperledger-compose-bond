@@ -29,14 +29,15 @@ router.get('/account', async (req, res) => {
   }
 })
 
-// router.post('/setupDemo', (req, res) => {
-//   // const bn = new bondNetwork ()
-//   // bn.init('admin@bond').then(async () => {
-//   //   const setupdemorespose = await bn.setupDemo()
-//   //   console.log(setupdemorespose)
-//   //   return true
-//   // }).catch(console.log)
-// })
+router.post('/setupDemo', async (req, res) => {
+  try {
+    const { bondNetwork } = req
+    const response = await bondNetwork.setupDemo()
+    return res.json(response)
+  } catch (error) {
+    return res.status(400).json({ error: error.message })
+  }
+})
 
 router.get('/historian', async (req, res) => {
   const { bondNetwork } = req

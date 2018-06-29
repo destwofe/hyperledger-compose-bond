@@ -1,1 +1,1 @@
-composer network install --card PeerAdmin@hlfv1 --archiveFile bond.bna
+composer network start --networkName bond --networkVersion 0.0.1 --networkAdmin admin --networkAdminEnrollSecret adminpw --card PeerAdmin@hlfv1 --file networkadmin.card
