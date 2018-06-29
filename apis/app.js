@@ -1,8 +1,9 @@
-const logger = require('./common/logger')('app.js')
 const express = require('express')
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const morgan = require('morgan')
+const path = require('path')
+const logger = require('./common/logger')('app.js')
 
 const app = express()
 
@@ -15,8 +16,15 @@ app.use(morgan('dev'))
 
 app.use('/api', require('./common/route'))
 
+
+/**
+ * Routes REACT
+ */
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, '/build/index.html')))
+app.use(express.static('build'))
+
 const PORT = process.env.PORT || 3335
-app.listen(PORT, function (err) {
+app.listen(PORT, (err) => {
   if (err) { return }
   logger.info(`server listern on ${PORT}`)
 })
