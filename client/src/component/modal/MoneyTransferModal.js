@@ -10,7 +10,7 @@ class MoneyTransferModal extends Component {
 
   postCreateBondWallet = () => {
     const transferTransaction = {from: this.props.from, to: this.state.to, amount: this.state.amount}
-    Axios.post('http://api.destwofe.zyx/api/transaction/moneytransfer', transferTransaction, { headers: { accessToken: this.state.accessToken } })
+    Axios.post('http://api.destwofe.xyz/api/transaction/moneytransfer', transferTransaction, { headers: { accessToken: this.state.accessToken } })
       .then((response) => {
         this.props.toggle(true)
       })

@@ -9,7 +9,7 @@ class MoneyWalletModal extends Component {
   }
 
   postCreateMoneyWallet = () => {
-    Axios.post('http://api.destwofe.zyx/api/moneywallets', { }, { headers: { accessToken: this.state.accessToken } })
+    Axios.post('http://api.destwofe.xyz/api/moneywallets', { }, { headers: { accessToken: this.state.accessToken } })
       .then((response) => {
         this.props.toggle(true)
       })

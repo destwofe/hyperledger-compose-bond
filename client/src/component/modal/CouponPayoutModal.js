@@ -11,7 +11,7 @@ class BondTransferModal extends Component {
 
   postSubmitCouponPayout = () => {
     if (this.state.selectedMoneyWallet) {
-      Axios.post('http://api.destwofe.zyx/api/transaction/couponpayout', { bond: this.state.bond.symbole, moneyWallet: this.state.selectedMoneyWallet}, { headers: {accessToken: this.state.accessToken} })
+      Axios.post('http://api.destwofe.xyz/api/transaction/couponpayout', { bond: this.state.bond.symbole, moneyWallet: this.state.selectedMoneyWallet}, { headers: {accessToken: this.state.accessToken} })
         .then(response => {
           this.props.toggle()
           NotificationManager.info('Coupon payout success')
@@ -21,7 +21,7 @@ class BondTransferModal extends Component {
   }
 
   fetchData = (bond) => {
-    Axios.get('http://api.destwofe.zyx/api/moneywallets', { headers: { accessToken: this.state.accessToken } })
+    Axios.get('http://api.destwofe.xyz/api/moneywallets', { headers: { accessToken: this.state.accessToken } })
       .then(response => {
         this.setState({ moneywallets: response.data, bond })
       })
