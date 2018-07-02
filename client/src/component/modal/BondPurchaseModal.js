@@ -15,7 +15,7 @@ class BondWalletModal extends Component {
   }
 
   fetchMoneyWallet = () => {
-    Axios.get('http://api.destwofe.com/api/moneywallets', { headers: { accessToken: this.state.accessToken } })
+    Axios.get('http://api.destwofe.zyx/api/moneywallets', { headers: { accessToken: this.state.accessToken } })
     .then((response) => {
       this.setState({ moneywallets: response.data })
     })
@@ -25,7 +25,7 @@ class BondWalletModal extends Component {
   }
 
   fetchBondWallet = () => {
-    Axios.get('http://api.destwofe.com/api/bondwallets', { headers: { accessToken: this.state.accessToken } })
+    Axios.get('http://api.destwofe.zyx/api/bondwallets', { headers: { accessToken: this.state.accessToken } })
     .then((response) => {
       this.setState({ bondwallets: response.data })
     })
@@ -42,7 +42,7 @@ class BondWalletModal extends Component {
         bondwallet: this.state.selectedBondWallet,
         amount: this.state.amount
       }
-      Axios.post('http://api.destwofe.com/api/transaction/bondpurchase', data, { headers: { accessToken: this.state.accessToken } })
+      Axios.post('http://api.destwofe.zyx/api/transaction/bondpurchase', data, { headers: { accessToken: this.state.accessToken } })
         .then((response) => {
           this.props.toggle()
         })
