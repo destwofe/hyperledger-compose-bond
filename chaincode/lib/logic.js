@@ -124,7 +124,7 @@ async function BondTransferTransaction(tx) {
   const factory = getFactory()
 
   // validation
-  if (bond.getFullyQualifiedIdentifier() !== from.bond.getFullyQualifiedIdentifier() || bond.getFullyQualifiedIdentifier()  !== to.bond.getFullyQualifiedIdentifier()) {
+  if (bond.getFullyQualifiedIdentifier() !== from.bond.getFullyQualifiedIdentifier() || bond.getFullyQualifiedIdentifier() !== to.bond.getFullyQualifiedIdentifier()) {
     throw new Error('Error: wallet and bond is not match')
   }
   if (from.balance < amount) {
@@ -198,6 +198,15 @@ async function BondPurchaseTransaction(tx) {
   ])
 }
 
+const getPeriodDivider = (period) => {
+  switch (period) {
+  case 'YEAR': return 1
+  case 'WEEK': return 365 / 7
+  case 'DAY': return 365
+  default: return 1
+  }
+}
+
 /**
  * emit all coupon payout per year event for bond holder
  * @param {org.tbma.CouponPayoutTransaction} tx
@@ -211,13 +220,14 @@ async function CouponPayoutTransaction(tx) {
   await Promise.all(bondWallets.map(async (bondWallet) => {
     const bond = tx.bond
     const issuerMoneyWallet = tx.moneyWallet
-    const couponAmount = bondWallet.balance * bond.parValue * bond.couponRate / 100.0
+    const couponPerYear = bondWallet.balance * bond.parValue * bond.couponRate / 100.0
+    const couponPerPeriod = couponPerYear / this.getPeriodDivider(bond.paymentFrequency.period) / bond.paymentFrequency.periodMultipier
 
     // emit event
     const couponPayoutEvent = factory.newEvent(NS, 'CouponPayOutEvent')
     couponPayoutEvent.bond = tx.bond
     couponPayoutEvent.account = bondWallet.owner
-    couponPayoutEvent.amount = couponAmount
+    couponPayoutEvent.amount = couponPerPeriod
     emit(couponPayoutEvent)
 
     const investorCouponWallet = await moneyWalletRegistry.get(bondWallet.couponWallet.getIdentifier())
@@ -225,7 +235,7 @@ async function CouponPayoutTransaction(tx) {
       '$class': 'org.tbma.MoneyTransferTransaction',
       from: issuerMoneyWallet,
       to: investorCouponWallet,
-      amount: couponAmount
+      amount: couponPerPeriod
     })
   }))
 }

@@ -21,7 +21,7 @@ class BondHoldersModal extends Component {
     this.child.current.fetchData(bond)
   }
 
-  getPeriodMultipier = (period) => {
+  getPeriodDivider = (period) => {
     switch (period) {
       case 'YEAR': return 1
       case 'WEEK': return 365 / 7
@@ -34,7 +34,7 @@ class BondHoldersModal extends Component {
     const bond = this.state.bond
     const couponPerYears = this.state.bondWallets.map((wallet) => wallet.balance * (bond.couponRate / 100) * bond.parValue)
     const couponPerYear = couponPerYears.reduce((a, b) => a + b, 0)
-    const couponPerPeriod = couponPerYear * this.getPeriodMultipier(bond.paymentFrequency.period) / bond.paymentFrequency.periodMultipier
+    const couponPerPeriod = couponPerYear / this.getPeriodDivider(bond.paymentFrequency.period) / bond.paymentFrequency.periodMultipier
     this.setState({ couponPerPeriod })
   }
 
