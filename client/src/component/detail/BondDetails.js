@@ -14,7 +14,7 @@ class BondDetails extends Component {
   }
 
   fetchBondInfo = () => {
-    Axios.get(`http://localhost:3335/api/bonds/${this.props.match.params.id}`, { headers: { accessToken: localStorage.getItem('accessToken') } })
+    Axios.get(`http://api.destwofe.com/api/bonds/${this.props.match.params.id}`, { headers: { accessToken: localStorage.getItem('accessToken') } })
       .then(response => {
         this.setState({ bond: response.data })
       })

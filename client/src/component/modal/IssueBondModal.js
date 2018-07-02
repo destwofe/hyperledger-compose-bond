@@ -25,7 +25,7 @@ class IssueBondModal extends Component {
     }
     console.log(bondObject)
     if (bondObject.issuerMoneyWallet !== 'select' && bondObject.symbole !== '') {
-      Axios.post('http://localhost:3335/api/bonds', bondObject, { headers: { accessToken: this.state.accessToken } })
+      Axios.post('http://api.destwofe.com/api/bonds', bondObject, { headers: { accessToken: this.state.accessToken } })
         .then((response) => {
           this.props.toggle(true)
         })
@@ -35,7 +35,7 @@ class IssueBondModal extends Component {
     }
     // if (this.props.bond && this.props.from !== this.state.to && this.state.amount > 0) {
     //   const transferTransaction = { from: this.props.from, to: this.state.to, amount: this.state.amount, bond: this.props.bond }
-    //   Axios.post('http://localhost:3335/api/transaction/bondtransfer', transferTransaction, { headers: { accessToken: this.state.accessToken } })
+    //   Axios.post('http://api.destwofe.com/api/transaction/bondtransfer', transferTransaction, { headers: { accessToken: this.state.accessToken } })
     //     .then((response) => {
     //       this.props.toggle(true)
     //     })
@@ -46,7 +46,7 @@ class IssueBondModal extends Component {
   }
 
   fetchMoneyWallet = () => {
-    Axios.get('http://localhost:3335/api/moneywallets', { headers: { accessToken: this.state.accessToken } })
+    Axios.get('http://api.destwofe.com/api/moneywallets', { headers: { accessToken: this.state.accessToken } })
       .then((response) => {
         this.setState({ moneyWallets: response.data })
       })
