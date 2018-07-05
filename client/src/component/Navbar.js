@@ -17,7 +17,7 @@ class Homepage extends Component {
 
   saveSome = (event) => {
     event.preventDefault()
-    Axios.get('http://api.destwofe.xyz/api/account', { headers: { accessToken:  this.state.accessToken} })
+    Axios.get('http://localhost:3335/api/account', { headers: { accessToken:  this.state.accessToken} })
       .then(response => {
         localStorage.setItem('accessToken', this.state.accessToken)
         localStorage.setItem('email', response.data.email)

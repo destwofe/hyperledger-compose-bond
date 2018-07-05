@@ -14,7 +14,7 @@ class BondHoldersModal extends Component {
 
   fetchData = (bond) => {
     this.setState({ bond })
-    Axios.get(`http://api.destwofe.xyz/api/bondwallets?filter=bond&&bond=${bond.symbole}`, { headers: { accessToken: this.state.accessToken } })
+    Axios.get(`http://localhost:3335/api/bondwallets?filter=bond&&bond=${bond.symbole}`, { headers: { accessToken: this.state.accessToken } })
       .then(response => {
         this.setState({ bondWallets: response.data }, this.calculateCouponTotal)
       })

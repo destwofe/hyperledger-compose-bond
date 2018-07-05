@@ -14,7 +14,7 @@ class MoneyWallet extends Component {
   }
 
   fetchMoneyWallet = () => {
-    Axios.get('http://api.destwofe.xyz/api/moneywallets', { headers: { accessToken: this.state.accessToken } })
+    Axios.get('http://localhost:3335/api/moneywallets', { headers: { accessToken: this.state.accessToken } })
     .then((response) => {
       this.setState({ moneyWallets: response.data })
     })

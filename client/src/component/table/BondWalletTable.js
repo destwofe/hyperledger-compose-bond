@@ -15,13 +15,13 @@ class BondWallet extends Component {
 
   fetchBondWallet = () => {
     if (this.props.bond) {
-      Axios.get(`http://api.destwofe.xyz/api/bondwallets?filter=bond&&bond=${this.props.bond}`, { headers: { accessToken: this.state.accessToken } })
+      Axios.get(`http://localhost:3335/api/bondwallets?filter=bond&&bond=${this.props.bond}`, { headers: { accessToken: this.state.accessToken } })
         .then((response) => {
           this.setState({ bondwallets: response.data })
         })
         .catch(console.log)
     } else {
-      Axios.get('http://api.destwofe.xyz/api/bondwallets?filter=owner', { headers: { accessToken: this.state.accessToken } })
+      Axios.get('http://localhost:3335/api/bondwallets?filter=owner', { headers: { accessToken: this.state.accessToken } })
         .then((response) => {
           this.setState({ bondwallets: response.data })
         })

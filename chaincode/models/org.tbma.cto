@@ -18,21 +18,16 @@
 
 namespace org.tbma
 
-participant Account identified by email {
-  o String email
+concept Role {
+  o Boolean isIssuer default = false
+  o Boolean isInvestor default = false
+  o Boolean isGateway default = false
+}
+
+participant Account identified by id {
+  o String id
   o String name
-}
-
-enum Period {
-  o DAY
-  o WEEK
-  o MONTH
-  o YEAR
-}
-
-concept PaymentFrequency {
-  o Integer periodMultipier
-  o Period period
+  o Role role
 }
 
 asset MoneyWallet identified by id {
@@ -41,15 +36,29 @@ asset MoneyWallet identified by id {
   o Double balance
 }
 
-asset Bond identified by symbole {
-  o String symbole
+concept CouponPayoutPerWallet {
+  --> BondWallet bondWallet
+  --> MoneyWallet moneyWallet
+  o Double balance
+  o Double couponAmount
+}
+
+concept CouponPayout {
+  o Double couponPerUnit
+  o String transactionId
+}
+
+asset Bond identified by symbol {
+  o String symbol
   o Double parValue
   o Double couponRate
-  o PaymentFrequency paymentFrequency
+  o Integer paymentFrequency
+  o DateTime issueDate
   o DateTime maturity
   o Double totalSupply
   --> Account issuer
   --> MoneyWallet issuerMoneyWallet
+  o CouponPayout[] couponPayout
 }
 
 asset BondWallet identified by id {
@@ -60,12 +69,23 @@ asset BondWallet identified by id {
   --> MoneyWallet couponWallet
 }
 
-transaction SetupDemo {
-}
+/**
+ * Transactions And Events
+ */
 
 transaction MoneyTransferTransaction {
   --> MoneyWallet from
   --> MoneyWallet to
+  o Double amount
+}
+
+transaction MoneyDepositTransaction {
+  --> MoneyWallet to
+  o Double amount
+}
+
+transaction MoneyWithdrawTransaction {
+  --> MoneyWallet from
   o Double amount
 }
 
@@ -78,8 +98,8 @@ transaction BondTransferTransaction {
 
 transaction BondPurchaseTransaction {
   --> Bond bond
-  --> MoneyWallet investorMoneyWallet
-  --> BondWallet investorBondWallet
+  --> MoneyWallet moneyWallet
+  --> BondWallet bondWallet
   o Double amount
 }
 
@@ -88,29 +108,36 @@ transaction CouponPayoutTransaction {
   --> MoneyWallet moneyWallet
 }
 
+transaction BondBuyBackTransaction {
+  --> Bond bond
+  --> MoneyWallet moneyWallet
+}
+
+transaction RoleUpdateTransaction {
+  --> Account Account
+  o String role
+  o Boolean isGrant
+}
+
 event MoneyTransferEvent {
-  --> MoneyWallet from
-  --> MoneyWallet to
+  --> MoneyWallet from optional
+  --> MoneyWallet to optional
   o Double amount
+  o String remark optional
 }
 
 event BondTransferEvent {
   --> Bond bond
-  --> BondWallet from
-  --> BondWallet to
+  --> BondWallet from optional
+  --> BondWallet to optional
   o Double amount
+  o String remark optional
 }
 
-event BondPurchaseEvent {
-  --> Bond bond
-  --> Account investor
-  o Double amount
-}
-
-event CouponPayOutEvent {
-  --> Bond bond
-  --> Account account
-  o Double amount
+transaction RoleUpdateEvent {
+  --> Account Account
+  o String role
+  o Boolean isGrant
 }
 
 event LogEvent {

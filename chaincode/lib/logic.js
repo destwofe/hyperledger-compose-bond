@@ -14,72 +14,6 @@ function log(message = '') {
 }
 
 /**
- * setup demo participant and asset
- * @param {org.tbma.SetupDemo} setupDemo
- * @transaction
- */
-async function setupDemo(setupDemo) {
-  const factory = getFactory()
-
-  // create issue
-  const issuer = factory.newResource(NS, 'Account', 'issuerA@email.com')
-  issuer.name = 'Issuer A'
-
-  // create investors
-  const investorA = factory.newResource(NS, 'Account', 'investorA@email.com')
-  investorA.name = 'Investor A'
-
-  const investorB = factory.newResource(NS, 'Account', 'investorB@email.com')
-  investorB.name = 'Investor A'
-
-  const investorC = factory.newResource(NS, 'Account', 'investorC@email.com')
-  investorC.name = 'Investor A'
-
-  // create money wallet
-  const issuerAMoneyWallet = factory.newResource(NS, 'MoneyWallet', 'issuerAMoneyWallet')
-  issuerAMoneyWallet.owner = factory.newRelationship(NS, 'Account', 'issuerA@email.com')
-  issuerAMoneyWallet.balance = 100000000
-
-  const investorAMoneyWallet = factory.newResource(NS, 'MoneyWallet', 'investorAMoneyWallet')
-  investorAMoneyWallet.owner = factory.newRelationship(NS, 'Account', 'investorA@email.com')
-  investorAMoneyWallet.balance = 50000000
-
-  const investorBMoneyWallet = factory.newResource(NS, 'MoneyWallet', 'investorBMoneyWallet')
-  investorBMoneyWallet.owner = factory.newRelationship(NS, 'Account', 'investorB@email.com')
-  investorBMoneyWallet.balance = 40000000
-
-  const investorCMoneyWallet = factory.newResource(NS, 'MoneyWallet', 'investorCMoneyWallet')
-  investorCMoneyWallet.owner = factory.newRelationship(NS, 'Account', 'investorC@email.com')
-  investorCMoneyWallet.balance = 200000000
-
-  // create bond
-  const bond = factory.newResource(NS, 'Bond', 'THB001A')
-  const paymentFrequency = factory.newConcept(NS, 'PaymentFrequency')
-  paymentFrequency.periodMultipier = 1
-  paymentFrequency.period = 'YEAR'
-  bond.parValue = 1000
-  bond.couponRate = 3.8
-  bond.paymentFrequency = paymentFrequency
-  bond.maturity = new Date(2019, 6, 19)
-  bond.totalSupply = 0
-  bond.issuer = issuer
-  bond.issuerMoneyWallet = issuerAMoneyWallet
-
-  // commit to block
-  const [accountRegistry, bondRegistry, moneyWalletRegistry] = await Promise.all([
-    getParticipantRegistry(`${NS}.Account`),
-    getAssetRegistry(`${NS}.Bond`),
-    getAssetRegistry(`${NS}.MoneyWallet`)
-  ])
-
-  await Promise.all([
-    accountRegistry.addAll([issuer, investorA, investorB, investorC]),
-    bondRegistry.addAll([bond]),
-    moneyWalletRegistry.addAll([issuerAMoneyWallet, investorAMoneyWallet, investorBMoneyWallet, investorCMoneyWallet])
-  ])
-}
-
-/**
  * transfer money action
  * @param {org.tbma.MoneyTransferTransaction} tx
  * @transaction
@@ -88,8 +22,9 @@ async function MoneyTransferTransaction(tx) {
   const from = tx.from
   const to = tx.to
   const amount = tx.amount
+  const remark = tx.remark
 
-  if (from.balance < amount) {
+  if (from && from.balance < amount) {
     throw new Error('Error: MoneyWallet balance is not enougth')
   }
 
@@ -98,16 +33,52 @@ async function MoneyTransferTransaction(tx) {
   transferEvent.from = from
   transferEvent.to = to
   transferEvent.amount = amount
+  transferEvent.remark = remark
   emit(transferEvent)
 
-  from.balance -= amount
-  to.balance += amount
-
   const moneyWalletRegistry = await getAssetRegistry(`${NS}.MoneyWallet`)
-  await moneyWalletRegistry.updateAll([
+  if (from) {
+    from.balance -= amount
+    await moneyWalletRegistry.update(from)
+  }
+  if (to) {
+    to.balance += amount
+    await moneyWalletRegistry.update(to)
+  }
+}
+
+/**
+ * transfer money action
+ * @param {org.tbma.MoneyDepositTransaction} tx
+ * @transaction
+ */
+async function MoneyDepositTransaction(tx) {
+  const to = tx.to
+  const amount = tx.amount
+
+  await MoneyTransferTransaction({
+    $class: 'org.tbma.MoneyTransferTransaction',
+    to,
+    amount,
+    remark: 'DEPOSIT'
+  })
+}
+
+/**
+ * transfer money action
+ * @param {org.tbma.MoneyWithdrawTransaction} tx
+ * @transaction
+ */
+async function MoneyWithdrawTransaction(tx) {
+  const from = tx.from
+  const amount = tx.amount
+
+  await MoneyTransferTransaction({
+    $class: 'org.tbma.MoneyTransferTransaction',
     from,
-    to
-  ])
+    amount,
+    remark: 'WITHDRAW'
+  })
 }
 
 /**
@@ -117,39 +88,41 @@ async function MoneyTransferTransaction(tx) {
  */
 async function BondTransferTransaction(tx) {
   const from = tx.from
-  const bond = tx.bond
   const to = tx.to
   const amount = tx.amount
+  const remark = tx.remark
 
   const factory = getFactory()
 
   // validation
-  if (bond.getFullyQualifiedIdentifier() !== from.bond.getFullyQualifiedIdentifier() || bond.getFullyQualifiedIdentifier() !== to.bond.getFullyQualifiedIdentifier()) {
+  if (from && to && from.bond.getFullyQualifiedIdentifier() !== to.bond.getFullyQualifiedIdentifier()) {
     throw new Error('Error: wallet and bond is not match')
   }
-  if (from.balance < amount) {
+  if (from && from.balance < amount) {
     throw new Error('Error: bond balance is not enougth')
   }
 
-  // operation
-  from.balance -= amount
-  to.balance += amount
-
   // emit event
   const transferEvent = factory.newEvent(NS, 'BondTransferEvent')
-  transferEvent.bond = bond
+  transferEvent.bond = from && from.bond || to && to.bond
   transferEvent.from = from
   transferEvent.to = to
   transferEvent.amount = amount
+  transferEvent.remark = remark
   emit(transferEvent)
 
   // commit to block
   const bondWalletRegistry = await getAssetRegistry(`${NS}.BondWallet`)
 
-  await Promise.all([
-    bondWalletRegistry.update(from),
-    bondWalletRegistry.update(to),
-  ])
+  // operation
+  if (from) {
+    from.balance -= amount
+    await bondWalletRegistry.update(from)
+  }
+  if (to) {
+    to.balance += amount
+    await bondWalletRegistry.update(to)
+  }
 }
 
 /**
@@ -160,10 +133,9 @@ async function BondTransferTransaction(tx) {
 async function BondPurchaseTransaction(tx) {
   const bond = tx.bond
   const amount = tx.amount
-  const investorMoneyWallet = tx.investorMoneyWallet
-  const investorBondWallet = tx.investorBondWallet
+  const moneyWallet = tx.moneyWallet
+  const bondWallet = tx.bondWallet
   const issuerMoneyWallet = bond.issuerMoneyWallet
-  const investor = investorBondWallet.owner
 
   const factory = getFactory()
 
@@ -171,14 +143,6 @@ async function BondPurchaseTransaction(tx) {
 
   // mint bond for investor
   bond.totalSupply += amount
-  investorBondWallet.balance += amount
-
-  // emit event
-  const bondPurchaseEvent = factory.newEvent(NS, 'BondPurchaseEvent')
-  bondPurchaseEvent.bond = bond
-  bondPurchaseEvent.investor = investor
-  bondPurchaseEvent.amount = amount
-  emit(bondPurchaseEvent)
 
   const [bondRegistry, bondWalletRegistry] = await Promise.all([
     getAssetRegistry(`${NS}.Bond`),
@@ -189,22 +153,32 @@ async function BondPurchaseTransaction(tx) {
   await Promise.all([
     MoneyTransferTransaction({
       '$class': 'org.tbma.MoneyTransferTransaction',
-      from: investorMoneyWallet,
+      from: moneyWallet,
       to: issuerMoneyWallet,
       amount: totalAmount
     }),
-    bondRegistry.update(bond),
-    bondWalletRegistry.update(investorBondWallet)
+    BondTransferTransaction({
+      $class: 'org.tbma.BondTransferTransaction',
+      to: bondWallet,
+      bond,
+      amount,
+      remark: 'PURCHASE'
+    }),
+    bondRegistry.update(bond)
   ])
 }
 
-const getPeriodDivider = (period) => {
-  switch (period) {
-  case 'YEAR': return 1
-  case 'WEEK': return 365 / 7
-  case 'DAY': return 365
-  default: return 1
-  }
+const getBondAge = (issueDate, matureDate) => {
+  return Math.abs(issueDate.getTime() - matureDate.getTime()) / 1000 / 60 / 60 / 24 // today
+}
+
+const getCouponTime = bond => {
+  const age = getBondAge(new Date(bond.issueDate), new Date(bond.maturity))
+  return Math.floor(age / 365 * bond.paymentFrequency) // TODO
+}
+
+const getCouponPerPeriod = bond => {
+  return bond.parValue * bond.couponRate / bond.paymentFrequency / 100.0
 }
 
 /**
@@ -214,28 +188,68 @@ const getPeriodDivider = (period) => {
  */
 async function CouponPayoutTransaction(tx) {
   const factory = getFactory()
+  const bond = tx.bond
+  const issuerMoneyWallet = tx.moneyWallet
+
+  const couponPerPeriod = getCouponPerPeriod(bond)
+  const couponPayout = factory.newConcept(NS, 'CouponPayout')
+  couponPayout.couponPerUnit = couponPerPeriod
+  couponPayout.transactionId = tx.transactionId
 
   const moneyWalletRegistry = await getAssetRegistry(`${NS}.MoneyWallet`)
-  const bondWallets = await query('bondWalletByBond', { bond: `resource:org.tbma.Bond#${tx.bond.symbole}` })
+  const bondWallets = await query('bondWalletByBond', { bond: `resource:org.tbma.Bond#${tx.bond.symbol}` })
   await Promise.all(bondWallets.map(async (bondWallet) => {
-    const bond = tx.bond
-    const issuerMoneyWallet = tx.moneyWallet
-    const couponPerYear = bondWallet.balance * bond.parValue * bond.couponRate / 100.0
-    const couponPerPeriod = couponPerYear / this.getPeriodDivider(bond.paymentFrequency.period) / bond.paymentFrequency.periodMultipier
-
-    // emit event
-    const couponPayoutEvent = factory.newEvent(NS, 'CouponPayOutEvent')
-    couponPayoutEvent.bond = tx.bond
-    couponPayoutEvent.account = bondWallet.owner
-    couponPayoutEvent.amount = couponPerPeriod
-    emit(couponPayoutEvent)
+    const couponAmount = bondWallet.balance * couponPerPeriod
 
     const investorCouponWallet = await moneyWalletRegistry.get(bondWallet.couponWallet.getIdentifier())
     await MoneyTransferTransaction({
       '$class': 'org.tbma.MoneyTransferTransaction',
       from: issuerMoneyWallet,
       to: investorCouponWallet,
-      amount: couponPerPeriod
+      amount: couponAmount,
+      remark: 'COUPON'
     })
+  }))
+
+  const bondRegistry = await getAssetRegistry(`${NS}.Bond`)
+  bond.couponPayout ? bond.couponPayout.push(couponPayout) : bond.couponPayout = [couponPayout]
+  await bondRegistry.update(bond)
+}
+
+/**
+ * buy back bond at maturity date and pay coupon if dont pay
+ * @param {org.tbma.BondBuyBackTransaction} tx
+ * * @transaction
+ */
+async function BondBuyBackTransaction(tx) {
+  const bond = tx.bond
+  const issuerMoneyWallet = tx.moneyWallet
+
+  if (bond.couponPayout.length < getCouponTime(bond)) {
+    throw new Error(`Bond missing coupon payout, Bond should payout ${getCouponTime(bond)} time, current ${bond.couponPayout.length}`)
+  }
+
+  const moneyWalletRegistry = await getAssetRegistry(`${NS}.MoneyWallet`)
+  const bondWallets = await query('bondWalletByBond', { bond: `resource:org.tbma.Bond#${tx.bond.symbol}` })
+  await Promise.all(bondWallets.map(async (bondWallet) => {
+    const buybackAmount = bondWallet.balance * bond.parValue
+
+    const investorCouponWallet = await moneyWalletRegistry.get(bondWallet.couponWallet.getIdentifier())
+    await Promise.all([
+      MoneyTransferTransaction({
+        '$class': 'org.tbma.MoneyTransferTransaction',
+        from: issuerMoneyWallet,
+        to: investorCouponWallet,
+        amount: buybackAmount,
+        remark: 'BUYBACK'
+      }),
+      BondTransferTransaction({
+        $class: 'org.tbma.BondTransferTransaction',
+        bond,
+        from: bondWallet,
+        amount: bondWallet.balance,
+        remark: 'BUYBACK'
+      })
+    ])
   }))
 }

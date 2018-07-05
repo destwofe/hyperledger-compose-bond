@@ -17,7 +17,7 @@ class BondTable extends Component {
   }
 
   fetchBonds = () => {
-    Axios.get('http://api.destwofe.xyz/api/bonds', { headers: { accessToken: this.state.accessToken } })
+    Axios.get('http://localhost:3335/api/bonds', { headers: { accessToken: this.state.accessToken } })
       .then((response) => {
         this.setState({ bonds: response.data })
       })
