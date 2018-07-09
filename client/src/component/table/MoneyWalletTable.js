@@ -2,11 +2,12 @@ import React, { Component } from 'react'
 import Axios from 'axios'
 
 import MoneyTransferModal from '../modal/MoneyTransferModal'
+import MoneyDepositModal from '../modal/MoneyDepositModal'
 
 class MoneyWallet extends Component {
   constructor() {
     super()
-    this.state = { moneyWallets: null, accessToken: localStorage.getItem('accessToken'), transferFrom: '', isModalOpen: false }
+    this.state = { moneyWallets: null, transferFrom: '', depositTo: '', isModalOpen: false, isDepositModalOpen: false }
   }
 
   componentDidMount() {
@@ -14,15 +15,20 @@ class MoneyWallet extends Component {
   }
 
   fetchMoneyWallet = () => {
-    Axios.get('http://localhost:3335/api/moneywallets', { headers: { accessToken: this.state.accessToken } })
-    .then((response) => {
-      this.setState({ moneyWallets: response.data })
-    })
-    .catch(console.log)
+    Axios.get('http://localhost:3335/api/moneywallets', { headers: { accessToken: localStorage.getItem('accessToken') } })
+      .then((response) => {
+        this.setState({ moneyWallets: response.data })
+      })
+      .catch(console.log)
   }
 
   modalToggle = (isReloadData) => {
     this.setState({ isModalOpen: !this.state.isModalOpen })
+    if (isReloadData) this.fetchMoneyWallet()
+  }
+
+  depositModalToggle = (isReloadData) => {
+    this.setState({ isDepositModalOpen: !this.state.isDepositModalOpen })
     if (isReloadData) this.fetchMoneyWallet()
   }
 
@@ -32,7 +38,9 @@ class MoneyWallet extends Component {
         <tr key={moneyWallet.id}>
           <th>{moneyWallet.id}</th>
           <td className="text-right">{Number(moneyWallet.balance).toLocaleString()} THB</td>
-          <td><button className="btn btn-outline-dark" onClick={() => this.setState({ isModalOpen: true, transferFrom: moneyWallet.id })}>transfer</button></td>
+          {localStorage.getItem('role') === 'GATEWAY' ?
+            <td><button className="btn btn-outline-dark" onClick={() => this.setState({ isDepositModalOpen: true, depositTo: moneyWallet.id })}>Deposit/Withdraw</button></td> :
+            <td><button className="btn btn-outline-dark" onClick={() => this.setState({ isModalOpen: true, transferFrom: moneyWallet.id })}>Transfer</button></td>}
         </tr>
       ))
     } else {
@@ -65,6 +73,7 @@ class MoneyWallet extends Component {
           </tbody>
         </table>
         <MoneyTransferModal from={this.state.transferFrom} isOpen={this.state.isModalOpen} toggle={this.modalToggle} />
+        <MoneyDepositModal to={this.state.depositTo} isOpen={this.state.isDepositModalOpen} toggle={this.depositModalToggle} />
       </div>
     )
   }

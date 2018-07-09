@@ -18,9 +18,10 @@ class Bond extends Component {
   }
 
   render() {
+    const role = localStorage.getItem('role')
     return (
       <div>
-        <button className="btn btn-primary my-2 mx-2" onClick={() => { this.modalToggle() }}>Issue new Bond</button>
+        {role === 'ISSUER' ? <button className="btn btn-primary my-2 mx-2" onClick={() => { this.modalToggle() }}>Issue new Bond</button> : <div></div>}
         <BondTable ref={this.child} history={this.props.history} />
         <IssueBondModal isOpen={this.state.isModalOpen} toggle={this.modalToggle} />
       </div>

@@ -37,9 +37,9 @@ class BondWalletModal extends Component {
   postBondPurchase = () => {
     if (this.state.selectedBondWallet !== 'select' && this.state.selectedMoneyWallet !== 'select' && this.state.payAmount <= this.state.walletbalance) {
       const data = {
-        bond: this.props.bond.symbole,
-        moneywallet: this.state.selectedMoneyWallet,
-        bondwallet: this.state.selectedBondWallet,
+        bond: this.props.bond.id,
+        moneyWallet: this.state.selectedMoneyWallet,
+        bondWallet: this.state.selectedBondWallet,
         amount: this.state.amount
       }
       Axios.post('http://localhost:3335/api/transaction/bondpurchase', data, { headers: { accessToken: this.state.accessToken } })
@@ -86,7 +86,7 @@ class BondWalletModal extends Component {
     if (this.state.bondwallets == null) {
       return (<option>Loading . . .</option>)
     } else if (this.state.bondwallets.length > 0) {
-      const bondwallets = this.state.bondwallets.filter(a => a.bond === `resource:org.tbma.Bond#${this.props.bond.symbole}`)
+      const bondwallets = this.state.bondwallets.filter(a => a.bond.symbol === this.props.bond.symbol)
       const optionList = [<option key="none">select</option>]
       optionList.push(...bondwallets.map(bondWallet => (<option key={bondWallet.id}>{bondWallet.id}</option>)))
       return optionList
@@ -102,8 +102,8 @@ class BondWalletModal extends Component {
           <ModalBody>
             <form>
               <div className="form-group">
-                <label htmlFor="bondpurchase-symbole">Symbole</label>
-                <input className="form-control" id="bondpurchase-symbole" type="text" defaultValue={this.props.bond.symbole} disabled />
+                <label htmlFor="bondpurchase-symbol">Symbol</label>
+                <input className="form-control" id="bondpurchase-symbol" type="text" defaultValue={this.props.bond.symbol} disabled />
               </div>
               <div className="form-group">
                 <label htmlFor="bondpurchase-parvalue">Parvalue</label>
@@ -124,11 +124,11 @@ class BondWalletModal extends Component {
                 <select className="form-control" id="bondpurchase-moneywallet" onChangeCapture={(event) => this.onChangeCaptureHandler({selectedMoneyWallet: event.target.value})}>
                   {this.renderMoneyWalletOptios()}
                 </select>
-                <label htmlFor="bondpurchase-moneywallet">Balance: {this.state.walletbalance}</label>
+                <label htmlFor="bondpurchase-moneywallet">Balance: {isNaN(Number(this.state.walletbalance)) ? 0 : Number(this.state.walletbalance).toLocaleString()} THB</label>
               </div>
               <div className="form-group">
                 <label htmlFor="bondpurchase-amount">Pay: Amount</label>
-                <input className="form-control" id="bondpurchase-amount" type="number" value={this.state.payAmount} disabled/>
+                <input className="form-control" id="bondpurchase-amount" value={Number(this.state.payAmount).toLocaleString()} disabled/>
               </div>
             </form>
           </ModalBody>

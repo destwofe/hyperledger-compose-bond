@@ -18,9 +18,10 @@ class Homepage extends Component {
   }
 
   render() {
+    const role = localStorage.getItem('role')
     return (
       <div>
-        <button className="btn btn-primary my-2 mx-2" onClick={() => { this.modalToggle() }}>Create Money Wallet</button>
+        {role !== 'GATEWAY' ? <button className="btn btn-primary my-2 mx-2" onClick={() => { this.modalToggle() }}>Create Money Wallet</button> : <div></div>}
         <MoneyWalletTable ref={this.child} />
         <MoneyWalletModal isOpen={this.state.isModalOpen} toggle={this.modalToggle} />
       </div>

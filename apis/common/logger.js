@@ -1,10 +1,10 @@
-var winston = require('winston')
-var fs = require('fs')
+const winston = require('winston')
+const fs = require('fs')
 
 // { error: 0, warn: 1, info: 2, verbose: 3, debug: 4, silly: 5 }
 
-const loggerBuilder = function (label) {
-  var dir = `${__dirname}/../logs`
+const loggerBuilder = (label) => {
+  const dir = `${__dirname}/../logs`
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir)
   }
@@ -13,11 +13,12 @@ const loggerBuilder = function (label) {
     format: winston.format.combine(
       winston.format.colorize(),
       winston.format.json(),
-      winston.format.label({label}),
-      winston.format.timestamp(), winston.format.printf((info) => `${info.timestamp} [${info.label}] ${info.level}: ${info.message}`)),
+      winston.format.label({ label }),
+      winston.format.timestamp(), winston.format.printf(info => `${info.timestamp} [${info.label}] ${info.level}: ${info.message}`),
+    ),
     transports: [
-      new winston.transports.Console()
-    ]
+      new winston.transports.Console(),
+    ],
   })
 
   // return new (winston.Logger)({

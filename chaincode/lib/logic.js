@@ -14,6 +14,27 @@ function log(message = '') {
 }
 
 /**
+ *
+ * @param {org.tbma.RoleUpdateTransaction} tx
+ * @transaction
+ */
+async function RoleUpdateTransaction(tx) {
+  const { account, role, isGrant } = tx
+
+  account.role[role] = isGrant
+
+  // emit event
+  const roleUpdateEvent = getFactory().newEvent(NS, 'RoleUpdateEvent')
+  roleUpdateEvent.account = account
+  roleUpdateEvent.role = role
+  roleUpdateEvent.isGrant = isGrant
+  emit(roleUpdateEvent)
+
+  const accountRegistry = await getParticipantRegistry(`${NS}.Account`)
+  await accountRegistry.update(account)
+}
+
+/**
  * transfer money action
  * @param {org.tbma.MoneyTransferTransaction} tx
  * @transaction

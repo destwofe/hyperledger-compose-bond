@@ -52,12 +52,18 @@ class BondNetwork {
       await this.connection.submitTransaction(resource)
       return Promise.resolve({ success: true })
     } catch (error) {
+      console.log(error)
       return Promise.reject(new Error(error.details))
     }
   }
 
-  async setupDemo() {
-    return this.submitTransaction({ $class: `${this.NS}.SetupDemo` })
+  async RoleUpdateTransaction({ account, role, isGrant }) {
+    return this.submitTransaction({
+      $class: 'org.tbma.RoleUpdateTransaction',
+      account: `resource:org.tbma.MoneyWallet#${account}`,
+      role,
+      isGrant,
+    })
   }
 
   async MoneyTransferTransaction(from, to, amount) {
@@ -79,12 +85,12 @@ class BondNetwork {
     })
   }
 
-  async BondPurchaseTransaction({ bond, moneywallet, bondwallet, amount }) {
+  async BondPurchaseTransaction({ bond, moneyWallet, bondWallet, amount }) {
     return this.submitTransaction({
       $class: 'org.tbma.BondPurchaseTransaction',
       bond: `resource:org.tbma.Bond#${bond}`,
-      investorBondWallet: `resource:org.tbma.BondWallet#${moneywallet}`,
-      investorMoneyWallet: `resource:org.tbma.MoneyWallet#${bondwallet}`,
+      bondWallet: `resource:org.tbma.BondWallet#${bondWallet}`,
+      moneyWallet: `resource:org.tbma.MoneyWallet#${moneyWallet}`,
       amount,
     })
   }
@@ -94,6 +100,22 @@ class BondNetwork {
       $class: 'org.tbma.CouponPayoutTransaction',
       bond: `resource:org.tbma.Bond#${bond}`,
       moneyWallet: `resource:org.tbma.MoneyWallet#${moneyWallet}`,
+    })
+  }
+
+  async MoneyDepositTransaction({ to, amount }) {
+    return this.submitTransaction({
+      $class: 'org.tbma.MoneyDepositTransaction',
+      to: `resource:org.tbma.MoneyWallet#${to}`,
+      amount,
+    })
+  }
+
+  async MoneyWithdrawTransaction({ from, amount }) {
+    return this.submitTransaction({
+      $class: 'org.tbma.MoneyWithdrawTransaction',
+      from: `resource:org.tbma.MoneyWallet#${from}`,
+      amount,
     })
   }
 
@@ -130,7 +152,7 @@ class BondNetwork {
     try {
       const bondRegistry = await this.connection.getAssetRegistry(`${this.NS}.Bond`)
       if (!id) return bondRegistry.getAll()
-      if (await bondRegistry.exists(id)) return bondRegistry.get(id)
+      if (await bondRegistry.exists(id)) return bondRegistry.resolve(id)
       return undefined
     } catch (error) {
       return Promise.reject(new Error(error.details))
@@ -140,8 +162,8 @@ class BondNetwork {
   async getBondWallets(id) {
     try {
       const bondWalletRegistry = await this.connection.getAssetRegistry(`${this.NS}.BondWallet`)
-      if (!id) return bondWalletRegistry.getAll()
-      if (await bondWalletRegistry.exists(id)) return bondWalletRegistry.get(id)
+      if (!id) return bondWalletRegistry.resolveAll()
+      if (await bondWalletRegistry.exists(id)) return bondWalletRegistry.resolve(id)
       return undefined
     } catch (error) {
       return Promise.reject(new Error(error.details))
@@ -150,7 +172,11 @@ class BondNetwork {
 
   async getBondWalletByOwner(owner) {
     try {
-      return this.connection.query('bondWalletByHolder', { owner: `resource:org.tbma.Account#${owner}` })
+      const [bondWalletRegistry, bondWallets] = await Promise.all([
+        this.connection.getAssetRegistry(`${this.NS}.BondWallet`),
+        this.connection.query('bondWalletByHolder', { owner: `resource:org.tbma.Account#${owner}` }),
+      ])
+      return Promise.all(bondWallets.map(bondWallet => bondWalletRegistry.resolve(bondWallet.id)))
     } catch (error) {
       return Promise.reject(new Error(error.details))
     }
@@ -158,7 +184,11 @@ class BondNetwork {
 
   async getBondWalletByBond(bond) {
     try {
-      return this.connection.query('bondWalletByBond', { bond: `resource:org.tbma.Bond#${bond}` })
+      const [bondWalletRegistry, bondWallets] = await Promise.all([
+        this.connection.getAssetRegistry(`${this.NS}.BondWallet`),
+        this.connection.query('bondWalletByBond', { bond: `resource:org.tbma.Bond#${bond}` }),
+      ])
+      return Promise.all(bondWallets.map(bondWallet => bondWalletRegistry.resolve(bondWallet.id)))
     } catch (error) {
       return Promise.reject(new Error(error.details))
     }
@@ -175,10 +205,15 @@ class BondNetwork {
     }
   }
 
-  async createAccount({ email, name }) {
+  async createAccount({ id, name, isIssuer, isInvestor, isGateway }) {
     try {
-      const account = this.factory.newResource(this.NS, 'Account', email)
+      const account = this.factory.newResource(this.NS, 'Account', id)
+      const role = this.factory.newConcept(this.NS, 'Role')
+      role.isIssuer = isIssuer
+      role.isInvestor = isInvestor
+      role.isGateway = isGateway
       account.name = name
+      account.role = role
       const accountRegistry = await this.connection.getParticipantRegistry(`${this.NS}.Account`)
       accountRegistry.add(account)
       return Promise.resolve({ account: this.serializer.toJSON(account) })
@@ -187,26 +222,26 @@ class BondNetwork {
     }
   }
 
-  async createBond({ symbole, parValue, couponRate, paymentMultipier, paymentPeroid, maturity, issuer, issuerMoneyWallet }) {
+  async createBond({ symbol, parValue, couponRate, paymentFrequency, issueDate, maturity, issuer, issuerMoneyWallet }) {
     try {
-      if (!argsIsExist(symbole, couponRate, paymentMultipier, paymentPeroid, maturity, issuer, issuerMoneyWallet)) return Promise.reject(new Error('missing required params'))
-      const [bondAsset, ownerParti, couponwalletAsset] = await Promise.all([
-        this.getBonds(symbole), this.getAccounts(issuer), this.getMoneyWallets(issuerMoneyWallet),
+      if (!argsIsExist(symbol, parValue, couponRate, paymentFrequency, issueDate, maturity, issuer, issuerMoneyWallet)) return Promise.reject(new Error('missing required params'))
+      const [ownerParti, couponwalletAsset] = await Promise.all([
+        this.getAccounts(issuer), this.getMoneyWallets(issuerMoneyWallet),
       ])
-      if (argsIsExist(bondAsset)) return Promise.reject(new Error('bond asset is already exist'))
+      // if (argsIsExist(bondAsset)) return Promise.reject(new Error('bond asset is already exist'))
       if (!argsIsExist(ownerParti, couponwalletAsset)) return Promise.reject(new Error('asset is not found'))
 
-      const paymentFrequency = this.factory.newConcept(this.NS, 'PaymentFrequency')
-      paymentFrequency.periodMultipier = paymentMultipier
-      paymentFrequency.period = paymentPeroid
-      const bond = this.factory.newResource(this.NS, 'Bond', symbole)
+      const bond = this.factory.newResource(this.NS, 'Bond', uuidv4())
+      bond.symbol = symbol
       bond.parValue = parValue
       bond.couponRate = couponRate
+      bond.paymentFrequency = paymentFrequency
+      bond.issueDate = issueDate
       bond.maturity = maturity
       bond.totalSupply = 0
       bond.issuer = this.factory.newRelationship(this.NS, 'Account', issuer)
       bond.issuerMoneyWallet = this.factory.newRelationship(this.NS, 'MoneyWallet', issuerMoneyWallet)
-      bond.paymentFrequency = paymentFrequency
+      bond.couponPayout = []
 
       const bondRegistry = await this.connection.getAssetRegistry(`${this.NS}.Bond`)
       await bondRegistry.add(bond)
@@ -216,18 +251,18 @@ class BondNetwork {
     }
   }
 
-  async createBondWallet({ bond, owner, couponwallet }) {
+  async createBondWallet({ bond, owner, couponWallet }) {
     try {
-      if (!argsIsExist(bond, owner, couponwallet)) return Promise.reject(new Error('missing required params'))
+      if (!argsIsExist(bond, owner, couponWallet)) return Promise.reject(new Error('missing required params'))
       const [bondAsset, ownerParti, couponwalletAsset] = await Promise.all([
-        this.getBonds(bond), this.getAccounts(owner), this.getMoneyWallets(couponwallet),
+        this.getBonds(bond), this.getAccounts(owner), this.getMoneyWallets(couponWallet),
       ])
       if (!argsIsExist(bondAsset, ownerParti, couponwalletAsset)) return Promise.reject(new Error('asset is not found'))
 
       const bondWallet = this.factory.newResource(this.NS, 'BondWallet', uuidv4())
       bondWallet.bond = this.factory.newRelationship(this.NS, 'Bond', bond)
       bondWallet.owner = this.factory.newRelationship(this.NS, 'Account', owner)
-      bondWallet.couponWallet = this.factory.newRelationship(this.NS, 'MoneyWallet', couponwallet)
+      bondWallet.couponWallet = this.factory.newRelationship(this.NS, 'MoneyWallet', couponWallet)
       bondWallet.balance = 0
 
       const bondWalletRegistry = await this.connection.getAssetRegistry(`${this.NS}.BondWallet`)

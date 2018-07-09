@@ -48,7 +48,8 @@ concept CouponPayout {
   o String transactionId
 }
 
-asset Bond identified by symbol {
+asset Bond identified by id {
+  o String id
   o String symbol
   o Double parValue
   o Double couponRate
@@ -90,7 +91,6 @@ transaction MoneyWithdrawTransaction {
 }
 
 transaction BondTransferTransaction {
-  --> Bond bond
   --> BondWallet from
   --> BondWallet to
   o Double amount
@@ -114,7 +114,7 @@ transaction BondBuyBackTransaction {
 }
 
 transaction RoleUpdateTransaction {
-  --> Account Account
+  --> Account account
   o String role
   o Boolean isGrant
 }
@@ -135,7 +135,7 @@ event BondTransferEvent {
 }
 
 transaction RoleUpdateEvent {
-  --> Account Account
+  --> Account account
   o String role
   o Boolean isGrant
 }

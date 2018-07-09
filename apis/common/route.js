@@ -1,5 +1,5 @@
 const router = require('express').Router()
-const BondNetwork = require('../BoneNetwork')
+const BondNetwork = require('../BondNetwork')
 
 router.param('id', (req, res, next, id) => {
   req.id = id
@@ -31,18 +31,8 @@ router.get('/account', async (req, res) => {
 
 router.post('/account', async (req, res) => {
   try {
-    const { bondNetwork, body: { email, name } } = req
-    const response = await bondNetwork.createAccount({ email, name })
-    return res.json(response)
-  } catch (error) {
-    return res.status(400).json({ error: error.message })
-  }
-})
-
-router.post('/setupDemo', async (req, res) => {
-  try {
-    const { bondNetwork } = req
-    const response = await bondNetwork.setupDemo()
+    const { bondNetwork, body: { id, name, isIssuer, isInvestor, isGateway } } = req
+    const response = await bondNetwork.createAccount({ id, name, isIssuer: Boolean(isIssuer), isInvestor: Boolean(isInvestor), isGateway: Boolean(isGateway) })
     return res.json(response)
   } catch (error) {
     return res.status(400).json({ error: error.message })
@@ -79,10 +69,10 @@ router.get('/bonds/:id', async (req, res) => {
 
 router.post('/bonds', async (req, res) => {
   try {
-    const { bondNetwork, body: { symbole, parValue, couponRate, paymentMultipier, paymentPeroid, maturity, issuerMoneyWallet } } = req
+    const { bondNetwork, body: { symbol, parValue, couponRate, paymentFrequency, issueDate, maturity, issuerMoneyWallet } } = req
     const identity = await bondNetwork.getCardParticipantIdentity()
     const identifier = identity.participant.$identifier
-    const bond = await bondNetwork.createBond({ symbole, parValue, couponRate, paymentMultipier, paymentPeroid, maturity: new Date(maturity), issuer: identifier, issuerMoneyWallet })
+    const bond = await bondNetwork.createBond({ symbol, parValue: Number(parValue), couponRate: Number(couponRate), paymentFrequency: Number(paymentFrequency), issueDate: new Date(issueDate), maturity: new Date(maturity), issuer: identifier, issuerMoneyWallet })
 
     return res.json(bond)
   } catch (error) {
@@ -118,10 +108,10 @@ router.get('/bondwallets/:id', async (req, res) => {
 
 router.post('/bondwallets', async (req, res) => {
   try {
-    const { bondNetwork, body: { bond, couponwallet } } = req
+    const { bondNetwork, body: { bond, couponWallet } } = req
     const identity = await bondNetwork.getCardParticipantIdentity()
     const identifier = identity.participant.$identifier
-    const bondWallet = await bondNetwork.createBondWallet({ bond, owner: identifier, couponwallet })
+    const bondWallet = await bondNetwork.createBondWallet({ bond, owner: identifier, couponWallet })
 
     return res.json(bondWallet)
   } catch (error) {
@@ -168,10 +158,30 @@ router.post('/transaction/moneytransfer', async (req, res) => {
   }
 })
 
+router.post('/transaction/moneydeposit', async (req, res) => {
+  try {
+    const { bondNetwork, body: { to, amount } } = req
+    const moneyDepositResponse = await bondNetwork.MoneyDepositTransaction({ to, amount })
+    return res.json(moneyDepositResponse)
+  } catch (error) {
+    return res.status(400).json({ error: error.message })
+  }
+})
+
+router.post('/transaction/moneywithdraw', async (req, res) => {
+  try {
+    const { bondNetwork, body: { from, amount } } = req
+    const moneyWithdrawResponse = await bondNetwork.MoneyWithdrawTransaction({ from, amount })
+    return res.json(moneyWithdrawResponse)
+  } catch (error) {
+    return res.status(400).json({ error: error.message })
+  }
+})
+
 router.post('/transaction/bondtransfer', async (req, res) => {
   try {
-    const { bondNetwork, body: { bond, from, to, amount } } = req
-    const bondTransferResponse = await bondNetwork.BondTransferTransaction({ bond, from, to, amount })
+    const { bondNetwork, body: { from, to, amount } } = req
+    const bondTransferResponse = await bondNetwork.BondTransferTransaction({ from, to, amount })
     return res.json(bondTransferResponse)
   } catch (error) {
     return res.status(400).json({ error: error.message })
@@ -180,8 +190,8 @@ router.post('/transaction/bondtransfer', async (req, res) => {
 
 router.post('/transaction/bondpurchase', async (req, res) => {
   try {
-    const { bondNetwork, body: { bond, moneywallet, bondwallet, amount } } = req
-    const moneyTransferResponse = await bondNetwork.BondPurchaseTransaction({ bond, moneywallet, bondwallet, amount })
+    const { bondNetwork, body: { bond, moneyWallet, bondWallet, amount } } = req
+    const moneyTransferResponse = await bondNetwork.BondPurchaseTransaction({ bond, moneyWallet, bondWallet, amount })
     return res.json(moneyTransferResponse)
   } catch (error) {
     return res.status(400).json({ error: error.message })

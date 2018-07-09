@@ -42,6 +42,14 @@
     condition: (p.getIdentifier() === r.owner.getIdentifier())
     action: ALLOW
   }
+  rule GateWayViewMoneyWallet {
+    description: "Allow gateway to view money wallet"
+    participant(p): "org.tbma.Account"
+    operation: READ
+    resource: "org.tbma.MoneyWallet"
+    condition: (p.role.isGateway)
+    action: ALLOW
+  }
 
 // Asset Creation
   // Bond

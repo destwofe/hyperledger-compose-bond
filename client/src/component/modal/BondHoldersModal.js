@@ -14,27 +14,18 @@ class BondHoldersModal extends Component {
 
   fetchData = (bond) => {
     this.setState({ bond })
-    Axios.get(`http://localhost:3335/api/bondwallets?filter=bond&&bond=${bond.symbole}`, { headers: { accessToken: this.state.accessToken } })
+    Axios.get(`http://localhost:3335/api/bondwallets?filter=bond&&bond=${bond.id}`, { headers: { accessToken: this.state.accessToken } })
       .then(response => {
         this.setState({ bondWallets: response.data }, this.calculateCouponTotal)
       })
     this.child.current.fetchData(bond)
   }
 
-  getPeriodDivider = (period) => {
-    switch (period) {
-      case 'YEAR': return 1
-      case 'WEEK': return 365 / 7
-      case 'DAY': return 365
-      default: return 1
-    }
-  }
-
   calculateCouponTotal = () => {
     const bond = this.state.bond
     const couponPerYears = this.state.bondWallets.map((wallet) => wallet.balance * (bond.couponRate / 100) * bond.parValue)
     const couponPerYear = couponPerYears.reduce((a, b) => a + b, 0)
-    const couponPerPeriod = couponPerYear / this.getPeriodDivider(bond.paymentFrequency.period) / bond.paymentFrequency.periodMultipier
+    const couponPerPeriod = couponPerYear / bond.paymentFrequency    
     this.setState({ couponPerPeriod })
   }
 
@@ -70,7 +61,7 @@ class BondHoldersModal extends Component {
     return (
       <div>
         <Modal isOpen={this.props.isOpen} toggle={this.toggle} size="lg">
-          <ModalHeader>Bond Holders - {(this.state.bond && this.state.bond.symbole) || ''}</ModalHeader>
+          <ModalHeader>Bond Holders - {(this.state.bond && this.state.bond.symbol) || ''}</ModalHeader>
           <ModalBody>
             {this.state.bondWallets.length > 0 ? this.renderTable() : <h1 className="my-5">Loading . . .</h1>}
           </ModalBody>

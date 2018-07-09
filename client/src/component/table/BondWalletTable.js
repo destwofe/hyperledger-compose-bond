@@ -39,9 +39,9 @@ class BondWallet extends Component {
       return this.state.bondwallets.map((item) => (
         <tr key={item.id}>
           <th>{item.id}</th>
-          <th><a href={`/bonds/${item.bond.replace(/resource:org.tbma.Bond#/g, '')}`}>{item.bond.replace(/resource:org.tbma.Bond#/g, '')}</a></th>
+          <th><a href={`/bonds/${item.bond.id}`}>{item.bond.symbol}</a></th>
           <td className="text-right">{Number(item.balance).toLocaleString()} unit</td>
-          <td><button className="btn btn-outline-dark" onClick={() => this.setState({ isModalOpen: true, transferFrom: item.id, transferBond: item.bond.replace(/resource:org.tbma.Bond#/g, '') })}>transfer</button></td>
+          <td><button className="btn btn-outline-dark" onClick={() => this.setState({ isModalOpen: true, transferFrom: item.id, transferBond: item.bond })}>transfer</button></td>
         </tr>
       ))
     } else {
@@ -69,7 +69,7 @@ class BondWallet extends Component {
           <thead>
             <tr>
               <th scope="col">Id</th>
-              <th scope="col">Symbole</th>
+              <th scope="col">Symbol</th>
               <th scope="col">Balance</th>
               <th scope="col">Action</th>
             </tr>

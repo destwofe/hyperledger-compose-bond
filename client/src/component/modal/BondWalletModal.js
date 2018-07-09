@@ -5,7 +5,7 @@ import Axios from 'axios'
 class BondWalletModal extends Component {
   constructor(props) {
     super()
-    this.state = { moneyWallets: null, bonds: null, accessToken: localStorage.getItem('accessToken'), bondWallet: { bond: 'select', couponwallet: 'select' } }
+    this.state = { moneyWallets: null, bonds: null, accessToken: localStorage.getItem('accessToken'), bondWallet: { bond: 'select', couponWallet: 'select' } }
   }
 
   componentDidMount() {
@@ -57,7 +57,7 @@ class BondWalletModal extends Component {
       return (<option>Loading . . .</option>)
     } else if (this.state.bonds.length > 0) {
       const optionList = [<option key="none">select</option>]
-      optionList.push(...this.state.bonds.map(bond => (<option key={bond.symbole}>{bond.symbole}</option>)))
+      optionList.push(...this.state.bonds.map(bond => (<option key={bond.id}>{bond.symbol}</option>)))
       return optionList
     }
     return
@@ -71,13 +71,13 @@ class BondWalletModal extends Component {
           <form>
             <div className="form-group">
               <label htmlFor="bondWalletModalBondSelect">Bond</label>
-              <select className="form-control" id="bondWalletModalBondSelect" onChangeCapture={(event) => this.onChangeCaptureHandler({bond: event.target.value})}>
+              <select className="form-control" id="bondWalletModalBondSelect" onChangeCapture={(event) => this.onChangeCaptureHandler({ bond: this.state.bonds[event.target.selectedIndex - 1].id })}>
                 {this.renderBondOptios()}
               </select>
             </div>
             <div className="form-group">
               <label htmlFor="bondWalletModalMoneyWalletSelect">Coupon Wallet</label>
-              <select className="form-control" id="bondWalletModalMoneyWalletSelect" onChangeCapture={(event) => this.onChangeCaptureHandler({couponwallet: event.target.value})}>
+              <select className="form-control" id="bondWalletModalMoneyWalletSelect" onChangeCapture={(event) => this.onChangeCaptureHandler({couponWallet: event.target.value})}>
                 {this.renderMoneyWalletOptios()}
               </select>
             </div>

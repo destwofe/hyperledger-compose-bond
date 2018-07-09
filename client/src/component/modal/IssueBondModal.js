@@ -6,7 +6,12 @@ import Axios from 'axios'
 class IssueBondModal extends Component {
   constructor(props) {
     super()
-    this.state = { accessToken: localStorage.getItem('accessToken'), moneyWallets: null, symbole: '', parValue: 1000, couponRate: 3.5, paymentPeroid: 'YEAR', paymentMultipier: 1, maturity: '2019-01-10', issuerMoneyWallet: 'select' }
+    const currentDate = new Date()
+    const currentDateString = currentDate.toISOString().substring(0, 10)
+    const nextYear = new Date()
+    nextYear.setFullYear(nextYear.getFullYear() + 1)
+    const nextYearString = nextYear.toISOString().substring(0, 10)
+    this.state = { accessToken: localStorage.getItem('accessToken'), moneyWallets: null, symbol: '', parValue: 1000, couponRate: 3.5, paymentFrequency: 1, issueDate: currentDateString, maturity: nextYearString, issuerMoneyWallet: 'select' }
   }
 
   componentDidMount() {
@@ -15,16 +20,15 @@ class IssueBondModal extends Component {
 
   postIssueBond = () => {
     const bondObject = {
-      symbole: this.state.symbole,
+      symbol: this.state.symbol,
       parValue: this.state.parValue,
       couponRate: this.state.couponRate,
-      paymentPeroid: this.state.paymentPeroid,
-      paymentMultipier: this.state.paymentMultipier,
+      paymentFrequency: this.state.paymentFrequency,
+      issueDate: new Date(this.state.issueDate),
       maturity: new Date(this.state.maturity),
       issuerMoneyWallet: this.state.issuerMoneyWallet
     }
-    console.log(bondObject)
-    if (bondObject.issuerMoneyWallet !== 'select' && bondObject.symbole !== '') {
+    if (bondObject.issuerMoneyWallet !== 'select' && bondObject.symbol !== '') {
       Axios.post('http://localhost:3335/api/bonds', bondObject, { headers: { accessToken: this.state.accessToken } })
         .then((response) => {
           this.props.toggle(true)
@@ -33,16 +37,6 @@ class IssueBondModal extends Component {
     } else {
       NotificationManager.error('cannot transfer please check input value', 'Error Transfer!')
     }
-    // if (this.props.bond && this.props.from !== this.state.to && this.state.amount > 0) {
-    //   const transferTransaction = { from: this.props.from, to: this.state.to, amount: this.state.amount, bond: this.props.bond }
-    //   Axios.post('http://localhost:3335/api/transaction/bondtransfer', transferTransaction, { headers: { accessToken: this.state.accessToken } })
-    //     .then((response) => {
-    //       this.props.toggle(true)
-    //     })
-    //     .catch(error => NotificationManager.error(error.toString, 'Uncatch exception'))
-    // } else {
-    //   NotificationManager.error('cannot transfer please check input value', 'Error Transfer!')
-    // }
   }
 
   fetchMoneyWallet = () => {
@@ -65,14 +59,15 @@ class IssueBondModal extends Component {
   }
 
   render() {
+    // symbol, parValue, couponRate, paymentFrequency, issueDate, maturity, issuerMoneyWallet
     return (
       <Modal isOpen={this.props.isOpen} toggle={this.props.toggle}>
         <ModalHeader>Bond Wallet</ModalHeader>
         <ModalBody>
           <form>
             <div className="form-group">
-              <label htmlFor="issuebond-symbole">Symbole</label>
-              <input className="form-control" id="issuebond-symbole" type="text" value={this.state.symbole} onChange={(event) => this.setState({ symbole: String(event.target.value).toUpperCase() })} />
+              <label htmlFor="issuebond-symbol">Symbol</label>
+              <input className="form-control" id="issuebond-symbol" type="text" value={this.state.symbol} onChange={(event) => this.setState({ symbol: String(event.target.value).toUpperCase() })} />
             </div>
             <div className="form-group">
               <label htmlFor="issuebond-parvalue">Par value</label>
@@ -83,17 +78,12 @@ class IssueBondModal extends Component {
               <input className="form-control" id="issuebond-couponrate" type="number" step="0.1" value={this.state.couponRate} onChange={(event) => this.setState({ couponRate: event.target.value })} />
             </div>
             <div className="form-group">
-              <label htmlFor="issuebond-period">Period</label>
-              <select className="form-control" id="issuebond-period" onChangeCapture={(event) => this.setState({ paymentPeroid: event.target.value })}>
-                <option>YEAR</option>
-                <option>MONTH</option>
-                <option>WEEK</option>
-                <option>DAY</option>
-              </select>
+              <label htmlFor="issuebond-periodmulti">Period Frequency</label>
+              <input className="form-control" id="issuebond-periodmulti" type="number" value={this.state.paymentFrequency} onChange={(event) => this.setState({ paymentFrequency: event.target.value })} />
             </div>
             <div className="form-group">
-              <label htmlFor="issuebond-periodmulti">Period Multipier</label>
-              <input className="form-control" id="issuebond-periodmulti" type="number" value={this.state.paymentMultipier} onChange={(event) => this.setState({ paymentMultipier: event.target.value })} />
+              <label htmlFor="issuebond-issueDate">issueDate</label>
+              <input className="form-control" id="issuebond-issueDate" type="date" value={this.state.issueDate} onChange={(event) => this.setState({ issueDate: event.target.value })} />
             </div>
             <div className="form-group">
               <label htmlFor="issuebond-maturity">Maturity</label>

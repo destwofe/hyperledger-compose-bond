@@ -20,7 +20,7 @@ class Homepage extends Component {
   render() {
     return (
       <div>
-        <button className="btn btn-primary my-2 mx-2" onClick={() => { this.modalToggle() }}>Issue Bond</button>
+        <button className="btn btn-primary my-2 mx-2" onClick={() => { this.modalToggle() }}>Create Bond Wallet</button>
         <BondWalletTable ref={this.child} />
         <BondWalletModal isOpen={this.state.isModalOpen} toggle={this.modalToggle} />
       </div>

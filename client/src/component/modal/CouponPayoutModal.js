@@ -11,7 +11,7 @@ class BondTransferModal extends Component {
 
   postSubmitCouponPayout = () => {
     if (this.state.selectedMoneyWallet) {
-      Axios.post('http://localhost:3335/api/transaction/couponpayout', { bond: this.state.bond.symbole, moneyWallet: this.state.selectedMoneyWallet}, { headers: {accessToken: this.state.accessToken} })
+      Axios.post('http://localhost:3335/api/transaction/couponpayout', { bond: this.state.bond.id, moneyWallet: this.state.selectedMoneyWallet}, { headers: {accessToken: this.state.accessToken} })
         .then(response => {
           this.props.toggle()
           NotificationManager.info('Coupon payout success')

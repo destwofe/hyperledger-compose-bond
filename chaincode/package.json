@@ -3,7 +3,7 @@
     "composer": "^0.19.8"
   },
   "name": "bond",
-  "version": "0.0.6",
+  "version": "0.0.9",
   "description": "first development application on hyperledger fabric compose for popouse bond",
   "scripts": {
     "prepublish": "mkdirp ./dist && composer archive create --sourceType dir --sourceName . -a ./dist/bond.bna",
@@ -24,18 +24,18 @@
   "email": "destwofe@gmail.com",
   "license": "Apache-2.0",
   "devDependencies": {
-    "composer-admin": "^0.19.8",
-    "composer-cli": "^0.19.8",
-    "composer-client": "^0.19.8",
-    "composer-common": "^0.19.8",
-    "composer-connector-embedded": "^0.19.8",
-    "composer-cucumber-steps": "^0.19.8",
     "chai": "latest",
     "chai-as-promised": "latest",
+    "composer-admin": "^0.19.12",
+    "composer-cli": "^0.19.12",
+    "composer-client": "^0.19.12",
+    "composer-common": "^0.19.12",
+    "composer-connector-embedded": "^0.19.12",
+    "composer-cucumber-steps": "^0.19.12",
     "cucumber": "^2.2.0",
     "eslint": "latest",
-    "nyc": "latest",
     "mkdirp": "latest",
-    "mocha": "latest"
+    "mocha": "latest",
+    "nyc": "latest"
   }
 }
