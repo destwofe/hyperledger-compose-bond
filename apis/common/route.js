@@ -1,5 +1,6 @@
 const router = require('express').Router()
 const BondNetwork = require('../BondNetwork')
+const { getSafe } = require('../utils')
 
 router.param('id', (req, res, next, id) => {
   req.id = id
@@ -39,9 +40,12 @@ router.post('/account', async (req, res) => {
   }
 })
 
-router.get('/historian', async (req, res) => {
-  const { bondNetwork } = req
-  const historians = await bondNetwork.getHistorians()
+router.get('/historians', async (req, res) => {
+  const { bondNetwork, query: { transactionIDs } } = req
+  const inArr = getSafe(() => JSON.parse(transactionIDs)) || []
+  const historians = inArr.length > 0
+    ? await Promise.all(inArr.map(transactionId => bondNetwork.getHistorians(transactionId)))
+    : await bondNetwork.getHistorians()
   return res.json(historians)
 })
 
@@ -51,10 +55,53 @@ router.get('/events', async (req, res) => {
   return res.json(events)
 })
 
+router.get('/events/moneytransfer', async (req, res) => {
+  const { bondNetwork, query: { moneyWallet } } = req
+  try {
+    const events = await bondNetwork.getMoneyTransferEvents({ moneyWallet })
+    return res.json(events)
+  } catch (error) {
+    return res.status(404).json({ error: error.message })
+  }
+})
+
+router.get('/events/bondtransfer', async (req, res) => {
+  const { bondNetwork, query: { bondWallet, bond } } = req
+  try {
+    const events = await bondNetwork.getBondTransferEvents({ bondWallet, bond })
+    return res.json(events)
+  } catch (error) {
+    return res.status(404).json({ error: error.message })
+  }
+})
+
 router.get('/bonds', async (req, res) => {
   const { bondNetwork } = req
   const bonds = await bondNetwork.getBonds()
   return res.json(bonds)
+})
+
+router.get('/bondSubscriptionContracts', async (req, res) => {
+  try {
+    const { bondNetwork, query: { isCloseSale, bondId } } = req
+    const bondSubscriptionContract = await bondNetwork.getBondSubscriptionContract()
+    let filtered = bondSubscriptionContract
+    if (isCloseSale != null) filtered = filtered.filter(a => (isCloseSale === 'true') === a.isCloseSale)
+    if (bondId != null) filtered = filtered.filter(a => a.bond.id === bondId)
+    return res.json(filtered)
+  } catch (error) {
+    return res.status(404).json({ error: error.message })
+  }
+})
+
+router.get('/bondSubscriptionContracts/:id', async (req, res) => {
+  try {
+    const { bondNetwork } = req
+    const bondSubscriptionContract = await bondNetwork.getBondSubscriptionContract(req.id)
+    return res.json(bondSubscriptionContract)
+  } catch (error) {
+    return res.status(404).json({ error: error.message })
+  }
 })
 
 router.get('/bonds/:id', async (req, res) => {
@@ -67,14 +114,16 @@ router.get('/bonds/:id', async (req, res) => {
   }
 })
 
-router.post('/bonds', async (req, res) => {
+router.post('/issueBond', async (req, res) => {
   try {
-    const { bondNetwork, body: { symbol, parValue, couponRate, paymentFrequency, issueDate, maturity, issuerMoneyWallet } } = req
+    const { bondNetwork, body: { symbol, parValue, couponRate, paymentFrequency, issueTerm, hardCap, issuerMoneyWallet } } = req
     const identity = await bondNetwork.getCardParticipantIdentity()
     const identifier = identity.participant.$identifier
-    const bond = await bondNetwork.createBond({ symbol, parValue: Number(parValue), couponRate: Number(couponRate), paymentFrequency: Number(paymentFrequency), issueDate: new Date(issueDate), maturity: new Date(maturity), issuer: identifier, issuerMoneyWallet })
 
-    return res.json(bond)
+    const { bond } = await bondNetwork.createBond({ symbol, parValue: Number(parValue), couponRate: Number(couponRate), paymentFrequency: Number(paymentFrequency), issuer: identifier, issueTerm: Number(issueTerm) })
+    const { bondSubscriptionContract } = await bondNetwork.createBondSubscriptionContract({ bond: bond.id, hardCap, issuerMoneyWallet })
+
+    return res.json({ bond, bondSubscriptionContract })
   } catch (error) {
     return res.status(400).json({ error: error.message })
   }
@@ -188,10 +237,20 @@ router.post('/transaction/bondtransfer', async (req, res) => {
   }
 })
 
-router.post('/transaction/bondpurchase', async (req, res) => {
+router.post('/transaction/bondsubscription', async (req, res) => {
   try {
-    const { bondNetwork, body: { bond, moneyWallet, bondWallet, amount } } = req
-    const moneyTransferResponse = await bondNetwork.BondPurchaseTransaction({ bond, moneyWallet, bondWallet, amount })
+    const { bondNetwork, body: { subscriptionContract, moneyWallet, bondWallet, amount } } = req
+    const moneyTransferResponse = await bondNetwork.BondSubscriptionTransaction({ subscriptionContract, moneyWallet, bondWallet, amount })
+    return res.json(moneyTransferResponse)
+  } catch (error) {
+    return res.status(400).json({ error: error.message })
+  }
+})
+
+router.post('/transaction/bondsubscriptionclosesale', async (req, res) => {
+  try {
+    const { bondNetwork, body: { subscriptionContract } } = req
+    const moneyTransferResponse = await bondNetwork.BondSubscriptionCloseSaleTransaction({ subscriptionContract })
     return res.json(moneyTransferResponse)
   } catch (error) {
     return res.status(400).json({ error: error.message })
@@ -202,6 +261,16 @@ router.post('/transaction/couponpayout', async (req, res) => {
   try {
     const { bondNetwork, body: { bond, moneyWallet } } = req
     const couponPayoutTransactionResponse = await bondNetwork.CouponPayoutTransaction({ bond, moneyWallet })
+    return res.json(couponPayoutTransactionResponse)
+  } catch (error) {
+    return res.status(400).json({ error: error.message })
+  }
+})
+
+router.post('/transaction/buyback', async (req, res) => {
+  try {
+    const { bondNetwork, body: { bond, moneyWallet } } = req
+    const couponPayoutTransactionResponse = await bondNetwork.BondBuyBackTransaction({ bond, moneyWallet })
     return res.json(couponPayoutTransactionResponse)
   } catch (error) {
     return res.status(400).json({ error: error.message })

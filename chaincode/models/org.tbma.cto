@@ -52,13 +52,13 @@ asset Bond identified by id {
   o String id
   o String symbol
   o Double parValue
-  o Double couponRate
-  o Integer paymentFrequency
-  o DateTime issueDate
-  o DateTime maturity
+  o Double couponRate // per year
+  o Integer paymentFrequency // per year
+  o Integer issueTerm // month
+  o DateTime issueDate optional
+  o DateTime maturityDate optional
   o Double totalSupply
   --> Account issuer
-  --> MoneyWallet issuerMoneyWallet
   o CouponPayout[] couponPayout
 }
 
@@ -70,9 +70,34 @@ asset BondWallet identified by id {
   --> MoneyWallet couponWallet
 }
 
+concept Subscriper {
+  --> BondWallet wallet
+  o Double amount
+}
+
+asset BondSubscriptionContract identified by id {
+  o String id
+  --> Bond bond
+  o Subscriper[] subscripers
+  o Boolean isCloseSale default=false
+  o Double hardCap
+  o Double soldAmount default=0.0
+  --> MoneyWallet issuerMoneyWallet
+}
+
 /**
  * Transactions And Events
  */
+
+transaction MoneyMintTransaction {
+  --> MoneyWallet to
+  o Double amount
+}
+
+transaction MoneyBurnTransaction {
+  --> MoneyWallet from
+  o Double amount
+}
 
 transaction MoneyTransferTransaction {
   --> MoneyWallet from
@@ -80,13 +105,13 @@ transaction MoneyTransferTransaction {
   o Double amount
 }
 
-transaction MoneyDepositTransaction {
-  --> MoneyWallet to
+transaction BondMintTransaction {
+  --> BondWallet to
   o Double amount
 }
 
-transaction MoneyWithdrawTransaction {
-  --> MoneyWallet from
+transaction BondBurnTransaction {
+  --> BondWallet from
   o Double amount
 }
 
@@ -96,11 +121,15 @@ transaction BondTransferTransaction {
   o Double amount
 }
 
-transaction BondPurchaseTransaction {
-  --> Bond bond
+transaction BondSubscriptionTransaction {
+  --> BondSubscriptionContract subscriptionContract
   --> MoneyWallet moneyWallet
   --> BondWallet bondWallet
   o Double amount
+}
+
+transaction BondSubscriptionCloseSaleTransaction {
+  --> BondSubscriptionContract subscriptionContract
 }
 
 transaction CouponPayoutTransaction {
@@ -134,7 +163,7 @@ event BondTransferEvent {
   o String remark optional
 }
 
-transaction RoleUpdateEvent {
+event RoleUpdateEvent {
   --> Account account
   o String role
   o Boolean isGrant

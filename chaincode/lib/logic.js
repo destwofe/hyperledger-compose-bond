@@ -1,16 +1,44 @@
 /* global Promise buildQuery query getParticipantRegistry getAssetRegistry getFactory */
 
-
 const NS = 'org.tbma'
 
 /**
-   * log as event
-   * @param {String} message
-   */
+ * log as event
+ * @param {String} message
+ */
 function log(message = '') {
   const logEvent = getFactory().newEvent(NS, 'LogEvent')
   logEvent.message = message
   emit(logEvent)
+}
+
+/**
+ * emit event money transfer
+ * @param {Object} eventData
+ */
+function emitMoneyTransfer({ from, to, amount, remark }) {
+  // emit event
+  const transferEvent = getFactory().newEvent(NS, 'MoneyTransferEvent')
+  transferEvent.from = from
+  transferEvent.to = to
+  transferEvent.amount = amount
+  transferEvent.remark = remark
+  emit(transferEvent)
+}
+
+/**
+ * emit event money transfer
+ * @param {Object} eventData
+ */
+function emitBondTransfer({ bond, from, to, amount, remark }) {
+  // emit event
+  const transferEvent = getFactory().newEvent(NS, 'BondTransferEvent')
+  transferEvent.bond = bond
+  transferEvent.from = from
+  transferEvent.to = to
+  transferEvent.amount = amount
+  transferEvent.remark = remark
+  emit(transferEvent)
 }
 
 /**
@@ -36,6 +64,46 @@ async function RoleUpdateTransaction(tx) {
 
 /**
  * transfer money action
+ * @param {org.tbma.MoneyMintTransaction} tx
+ * @transaction
+ */
+async function MoneyMintTransaction(tx) {
+  const to = tx.to
+  const amount = tx.amount
+
+  // emit
+  emitMoneyTransfer({ to, amount, remark: 'DEPOSIT' })
+
+  // update
+  to.balance += amount
+
+  // commit
+  const moneyWalletRegistry = await getAssetRegistry(`${NS}.MoneyWallet`)
+  await moneyWalletRegistry.update(to)
+}
+
+/**
+ * transfer money action
+ * @param {org.tbma.MoneyBurnTransaction} tx
+ * @transaction
+ */
+async function MoneyBurnTransaction(tx) {
+  const from = tx.from
+  const amount = tx.amount
+
+  //emit
+  emitMoneyTransfer({ from, amount, remark: 'WITHDRAW' })
+
+  // update
+  from.balance -= amount
+
+  // commit
+  const moneyWalletRegistry = await getAssetRegistry(`${NS}.MoneyWallet`)
+  await moneyWalletRegistry.update(from)
+}
+
+/**
+ * transfer money action
  * @param {org.tbma.MoneyTransferTransaction} tx
  * @transaction
  */
@@ -45,61 +113,78 @@ async function MoneyTransferTransaction(tx) {
   const amount = tx.amount
   const remark = tx.remark
 
-  if (from && from.balance < amount) {
+  if (from.balance < amount) {
     throw new Error('Error: MoneyWallet balance is not enougth')
   }
 
   // emit event
-  const transferEvent = getFactory().newEvent(NS, 'MoneyTransferEvent')
-  transferEvent.from = from
-  transferEvent.to = to
-  transferEvent.amount = amount
-  transferEvent.remark = remark
-  emit(transferEvent)
+  emitMoneyTransfer({ from, to, amount, remark })
 
+  // update
+  from.balance -= amount
+  to.balance += amount
+
+  // commit
   const moneyWalletRegistry = await getAssetRegistry(`${NS}.MoneyWallet`)
-  if (from) {
-    from.balance -= amount
-    await moneyWalletRegistry.update(from)
-  }
-  if (to) {
-    to.balance += amount
-    await moneyWalletRegistry.update(to)
-  }
+  await moneyWalletRegistry.updateAll([from, to])
 }
 
 /**
- * transfer money action
- * @param {org.tbma.MoneyDepositTransaction} tx
+ * transfer bond
+ * @param {org.tbma.BondMintTransaction} tx
  * @transaction
  */
-async function MoneyDepositTransaction(tx) {
+async function BondMintTransaction(tx) {
   const to = tx.to
   const amount = tx.amount
 
-  await MoneyTransferTransaction({
-    $class: 'org.tbma.MoneyTransferTransaction',
-    to,
-    amount,
-    remark: 'DEPOSIT'
-  })
+  const bond = tx.bond || to.bond
+
+  // emit event
+  emitBondTransfer({ bond, to, amount, remark: 'MINT' })
+
+  // update
+  to.balance += amount
+  bond.totalSupply += amount
+
+  // commit to block
+  const [bondRegistry, bondWalletRegistry] = await Promise.all([
+    getAssetRegistry(`${NS}.Bond`),
+    getAssetRegistry(`${NS}.BondWallet`)
+  ])
+  await Promise.all([
+    bondRegistry.update(bond),
+    bondWalletRegistry.update(to)
+  ])
 }
 
 /**
- * transfer money action
- * @param {org.tbma.MoneyWithdrawTransaction} tx
+ * transfer bond
+ * @param {org.tbma.BondBurnTransaction} tx
  * @transaction
  */
-async function MoneyWithdrawTransaction(tx) {
+async function BondBurnTransaction(tx) {
   const from = tx.from
   const amount = tx.amount
 
-  await MoneyTransferTransaction({
-    $class: 'org.tbma.MoneyTransferTransaction',
-    from,
-    amount,
-    remark: 'WITHDRAW'
-  })
+  const bond = tx.bond || from.bond
+
+  // emit event
+  emitBondTransfer({ bond, from, amount, remark: 'BURN' })
+
+  // update
+  from.balance -= amount
+  bond.totalSupply -= amount
+
+  // commit to block
+  const [bondRegistry, bondWalletRegistry] = await Promise.all([
+    getAssetRegistry(`${NS}.Bond`),
+    getAssetRegistry(`${NS}.BondWallet`)
+  ])
+  await Promise.all([
+    bondRegistry.update(bond),
+    bondWalletRegistry.update(from)
+  ])
 }
 
 /**
@@ -110,83 +195,125 @@ async function MoneyWithdrawTransaction(tx) {
 async function BondTransferTransaction(tx) {
   const from = tx.from
   const to = tx.to
+  const bond = to.bond
   const amount = tx.amount
   const remark = tx.remark
 
-  const factory = getFactory()
-
   // validation
-  if (from && to && from.bond.getFullyQualifiedIdentifier() !== to.bond.getFullyQualifiedIdentifier()) {
+  if (from.bond.getFullyQualifiedIdentifier() !== to.bond.getFullyQualifiedIdentifier()) {
     throw new Error('Error: wallet and bond is not match')
   }
-  if (from && from.balance < amount) {
+  if (from.balance < amount) {
     throw new Error('Error: bond balance is not enougth')
   }
 
   // emit event
-  const transferEvent = factory.newEvent(NS, 'BondTransferEvent')
-  transferEvent.bond = from && from.bond || to && to.bond
-  transferEvent.from = from
-  transferEvent.to = to
-  transferEvent.amount = amount
-  transferEvent.remark = remark
-  emit(transferEvent)
+  emitBondTransfer({ bond, from, to, amount, remark })
+
+  // update
+  from.balance -= amount
+  to.balance += amount
 
   // commit to block
   const bondWalletRegistry = await getAssetRegistry(`${NS}.BondWallet`)
-
-  // operation
-  if (from) {
-    from.balance -= amount
-    await bondWalletRegistry.update(from)
-  }
-  if (to) {
-    to.balance += amount
-    await bondWalletRegistry.update(to)
-  }
+  await bondWalletRegistry.updateAll([from, to])
 }
 
 /**
- * purchase bond
- * @param {org.tbma.BondPurchaseTransaction} tx
+ * subscription bond
+ * @param {org.tbma.BondSubscriptionTransaction} tx
  * @transaction
  */
-async function BondPurchaseTransaction(tx) {
-  const bond = tx.bond
-  const amount = tx.amount
-  const moneyWallet = tx.moneyWallet
-  const bondWallet = tx.bondWallet
-  const issuerMoneyWallet = bond.issuerMoneyWallet
+async function BondSubscriptionTransaction(tx) {
+  const { subscriptionContract, moneyWallet, bondWallet, amount } = tx
+  const { bond, issuerMoneyWallet, isCloseSale, hardCap } = subscriptionContract
 
-  const factory = getFactory()
+  if (isCloseSale) {
+    throw new Error('Subscription contract is close sale')
+  }
 
-  const totalAmount = bond.parValue * amount
+  if (subscriptionContract.soldAmount + amount > hardCap) {
+    throw new Error('Subscription are over hard cap')
+  }
 
-  // mint bond for investor
-  bond.totalSupply += amount
+  if (!subscriptionContract.subscripers) { // prevent array null or undefined
+    subscriptionContract.subscripers = []
+  }
 
-  const [bondRegistry, bondWalletRegistry] = await Promise.all([
-    getAssetRegistry(`${NS}.Bond`),
-    getAssetRegistry(`${NS}.BondWallet`)
-  ])
+  const existSubscriper = subscriptionContract.subscripers.find(s => s.wallet.getIdentifier() === bondWallet.getIdentifier())
+  if (existSubscriper) { // update case
+    existSubscriper.amount += amount
+  } else { // new case
+    const newSubscriper = getFactory().newConcept(NS, 'Subscriper')
+    newSubscriper.wallet = bondWallet
+    newSubscriper.amount = amount
 
-  // commit to block
+    subscriptionContract.subscripers.push(newSubscriper)
+  }
+
+  subscriptionContract.soldAmount += amount
+  const moneyAmount = bond.parValue * amount
+
+  const bondSubscriptionContractRegistry = await getAssetRegistry(`${NS}.BondSubscriptionContract`)
   await Promise.all([
+    bondSubscriptionContractRegistry.update(subscriptionContract),
     MoneyTransferTransaction({
-      '$class': 'org.tbma.MoneyTransferTransaction',
+      $class: 'org.tbma.MoneyTransferTransaction',
       from: moneyWallet,
       to: issuerMoneyWallet,
-      amount: totalAmount
+      amount: moneyAmount,
+      remark: `PURCHASE:${bond.getFullyQualifiedIdentifier()}`
     }),
-    BondTransferTransaction({
-      $class: 'org.tbma.BondTransferTransaction',
-      to: bondWallet,
-      bond,
-      amount,
-      remark: 'PURCHASE'
-    }),
-    bondRegistry.update(bond)
   ])
+}
+
+/**
+ * set subscription contract sale status to close and transfer bond to investor wallet
+ * @param {org.tbma.BondSubscriptionCloseSaleTransaction} tx
+ * @transaction
+ */
+async function BondSubscriptionCloseSaleTransaction(tx) {
+  const { subscriptionContract } = tx
+  const { bond, isCloseSale, subscripers } = subscriptionContract
+
+  if (isCloseSale) {
+    throw new Error('Subscription contract is close sale')
+  }
+
+  // calculate maturity date
+  const maturityDate = new Date(tx.timestamp)
+  let matureMonth = maturityDate.getMonth() + bond.issueTerm % 12
+  let matuerYear = maturityDate.getFullYear() + bond.issueTerm / 12
+  if (matureMonth > 12) {
+    matureMonth -= 12
+    matuerYear += 1
+  }
+  maturityDate.setFullYear(matuerYear)
+  maturityDate.setMonth(matureMonth)
+
+  bond.maturityDate = maturityDate
+  bond.issueDate = tx.timestamp
+
+  subscriptionContract.isCloseSale = true
+
+  const [bondRegistry, bondSubscriptionContractRegistry] = await Promise.all([
+    getAssetRegistry(`${NS}.Bond`),
+    getAssetRegistry(`${NS}.BondSubscriptionContract`)
+  ])
+
+  await Promise.all([
+    bondRegistry.update(bond),
+    bondSubscriptionContractRegistry.update(subscriptionContract)
+  ])
+  for (let index = 0; index < subscripers.length; index++) {
+    const subscriper = subscripers[index];
+    await BondMintTransaction({
+      $class: 'org.tbma.BondMintTransaction',
+      to: subscriper.wallet,
+      amount: subscriper.amount,
+      bond
+    })
+  }
 }
 
 const getBondAge = (issueDate, matureDate) => {
@@ -194,7 +321,7 @@ const getBondAge = (issueDate, matureDate) => {
 }
 
 const getCouponTime = bond => {
-  const age = getBondAge(new Date(bond.issueDate), new Date(bond.maturity))
+  const age = getBondAge(new Date(bond.issueDate), new Date(bond.maturityDate))
   return Math.floor(age / 365 * bond.paymentFrequency) // TODO
 }
 
@@ -218,8 +345,9 @@ async function CouponPayoutTransaction(tx) {
   couponPayout.transactionId = tx.transactionId
 
   const moneyWalletRegistry = await getAssetRegistry(`${NS}.MoneyWallet`)
-  const bondWallets = await query('bondWalletByBond', { bond: `resource:org.tbma.Bond#${tx.bond.symbol}` })
-  await Promise.all(bondWallets.map(async (bondWallet) => {
+  const bondWallets = await query('bondWalletByBond', { bond: `resource:org.tbma.Bond#${tx.bond.id}` })
+  for (let index = 0; index < bondWallets.length; index++) {
+    const bondWallet = bondWallets[index];
     const couponAmount = bondWallet.balance * couponPerPeriod
 
     const investorCouponWallet = await moneyWalletRegistry.get(bondWallet.couponWallet.getIdentifier())
@@ -228,9 +356,9 @@ async function CouponPayoutTransaction(tx) {
       from: issuerMoneyWallet,
       to: investorCouponWallet,
       amount: couponAmount,
-      remark: 'COUPON'
+      remark: `COUPON:${bondWallet.getFullyQualifiedIdentifier()}`
     })
-  }))
+  }
 
   const bondRegistry = await getAssetRegistry(`${NS}.Bond`)
   bond.couponPayout ? bond.couponPayout.push(couponPayout) : bond.couponPayout = [couponPayout]
@@ -251,8 +379,9 @@ async function BondBuyBackTransaction(tx) {
   }
 
   const moneyWalletRegistry = await getAssetRegistry(`${NS}.MoneyWallet`)
-  const bondWallets = await query('bondWalletByBond', { bond: `resource:org.tbma.Bond#${tx.bond.symbol}` })
-  await Promise.all(bondWallets.map(async (bondWallet) => {
+  const bondWallets = await query('bondWalletByBond', { bond: `resource:org.tbma.Bond#${tx.bond.id}` })
+  for (let index = 0; index < bondWallets.length; index++) {
+    const bondWallet = bondWallets[index];
     const buybackAmount = bondWallet.balance * bond.parValue
 
     const investorCouponWallet = await moneyWalletRegistry.get(bondWallet.couponWallet.getIdentifier())
@@ -264,13 +393,12 @@ async function BondBuyBackTransaction(tx) {
         amount: buybackAmount,
         remark: 'BUYBACK'
       }),
-      BondTransferTransaction({
-        $class: 'org.tbma.BondTransferTransaction',
-        bond,
+      BondBurnTransaction({
+        '$class': 'org.tbma.BondBurnTransaction',
         from: bondWallet,
         amount: bondWallet.balance,
-        remark: 'BUYBACK'
+        bond
       })
     ])
-  }))
+  }
 }

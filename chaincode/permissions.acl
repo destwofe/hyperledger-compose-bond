@@ -1,247 +1,320 @@
 // View
   // org.tbma.Account
-  rule ViewAccount {
-    description: "Allow owner to view account details"
-    participant(p): "org.tbma.Account"
-    operation: READ
-    resource(r): "org.tbma.Account"
-    condition: (p.getIdentifier() === r.getIdentifier())
-    action: ALLOW
-  }
+    rule ViewAccount {
+      description: "Allow owner to view account details"
+      participant(p): "org.tbma.Account"
+      operation: READ
+      resource(r): "org.tbma.Account"
+      condition: (p.getIdentifier() === r.getIdentifier())
+      action: ALLOW
+    }
+    rule IssuerViewInvestorAccount {
+      description: "Allow issuer to view investor account"
+      participant(p): "org.tbma.Account"
+      operation: READ
+      resource(r): "org.tbma.Account"
+      condition: (p.role.isIssuer && r.role.isInvestor)
+      action: ALLOW
+    }
+    rule InvestorViewIssuerAccount {
+      description: "Allow investor to view issuer account"
+      participant(p): "org.tbma.Account"
+      operation: READ
+      resource(r): "org.tbma.Account"
+      condition: (p.role.isInvestor && r.role.isIssuer)
+      action: ALLOW
+    }
+    rule GatewayViewAccount {
+      description: "Allow gateway to view account"
+      participant(p): "org.tbma.Account"
+      operation: READ
+      resource: "org.tbma.Account"
+      condition: (p.role.isGateway)
+      action: ALLOW
+    }
+    rule ViewBondSubscriptionContract { // TODO allow investor view only self subscription ?
+      description: "Allow all to view subscriptionContract"
+      participant: "org.tbma.Account"
+      operation: READ
+      resource: "org.tbma.BondSubscriptionContract"
+      action: ALLOW
+    }
   // Bond
-  rule ViewBond {
-    description: "Allow all to view bond"
-    participant: "org.tbma.Account"
-    operation: READ
-    resource: "org.tbma.Bond"
-    action: ALLOW
-  }
+    rule ViewBond {
+      description: "Allow all to view bond"
+      participant: "org.tbma.Account"
+      operation: READ
+      resource: "org.tbma.Bond"
+      action: ALLOW
+    }
   // Bond Wallet
-  rule OwnerViewBondWallet {
-    description: "Allow owner to view bond wallet"
-    participant(p): "org.tbma.Account"
-    operation: READ
-    resource(r): "org.tbma.BondWallet"
-    condition: (p.getIdentifier() === r.owner.getIdentifier())
-    action: ALLOW
-  }
-  rule IssuerViewBondWallet {
-    description: "Allow issuer to view bond wallet"
-    participant(p): "org.tbma.Account"
-    operation: READ
-    resource(r): "org.tbma.BondWallet"
-    condition: (p.getIdentifier() === r.bond.issuer.getIdentifier())
-    action: ALLOW
-  }
+    rule OwnerViewBondWallet {
+      description: "Allow owner to view bond wallet"
+      participant(p): "org.tbma.Account"
+      operation: READ
+      resource(r): "org.tbma.BondWallet"
+      condition: (p.getIdentifier() === r.owner.getIdentifier())
+      action: ALLOW
+    }
+    rule IssuerViewBondWallet {
+      description: "Allow issuer to view bond wallet"
+      participant(p): "org.tbma.Account"
+      operation: READ
+      resource(r): "org.tbma.BondWallet"
+      condition: (p.getIdentifier() === r.bond.issuer.getIdentifier())
+      action: ALLOW
+    }
   // Money Wallet
-  rule OwnerViewMoneyWallet {
-    description: "Allow owner to view money wallet"
-    participant(p): "org.tbma.Account"
-    operation: READ
-    resource(r): "org.tbma.MoneyWallet"
-    condition: (p.getIdentifier() === r.owner.getIdentifier())
-    action: ALLOW
-  }
-  rule GateWayViewMoneyWallet {
-    description: "Allow gateway to view money wallet"
-    participant(p): "org.tbma.Account"
-    operation: READ
-    resource: "org.tbma.MoneyWallet"
-    condition: (p.role.isGateway)
-    action: ALLOW
-  }
+    rule OwnerViewMoneyWallet {
+      description: "Allow owner to view money wallet"
+      participant(p): "org.tbma.Account"
+      operation: READ
+      resource(r): "org.tbma.MoneyWallet"
+      condition: (p.getIdentifier() === r.owner.getIdentifier())
+      action: ALLOW
+    }
+    rule GateWayViewMoneyWallet {
+      description: "Allow gateway to view money wallet"
+      participant(p): "org.tbma.Account"
+      operation: READ
+      resource: "org.tbma.MoneyWallet"
+      condition: (p.role.isGateway)
+      action: ALLOW
+    }
 
 // Asset Creation
   // Bond
-  rule IssuerCreateBond {
-    description: "Allow Issuer to issue bond"
-    participant(p): "org.tbma.Account"
-    operation: CREATE
-    resource(r): "org.tbma.Bond"
-    condition: (p.role.isIssuer && p.getIdentifier() === r.issuer.getIdentifier() && p.getIdentifier() === r.issuerMoneyWallet.owner.getIdentifier())
-    action: ALLOW
-  }
+    rule IssuerCreateBond {
+      description: "Allow Issuer to issue bond"
+      participant(p): "org.tbma.Account"
+      operation: CREATE
+      resource(r): "org.tbma.Bond"
+      condition: (p.role.isIssuer && p.getIdentifier() === r.issuer.getIdentifier())
+      action: ALLOW
+    }
   // Bond Wallet
-  rule CreateBondWallet {
-    description: "Allow all to create *empty* bond wallet"
-    participant(p): "org.tbma.Account"
-    operation: CREATE
-    resource(r): "org.tbma.BondWallet"
-    condition: (p.getIdentifier() === r.owner.getIdentifier() && p.getIdentifier() === r.couponWallet.owner.getIdentifier() && r.balance === 0)
-    action: ALLOW
-  }
+    rule CreateBondWallet {
+      description: "Allow all to create *empty* bond wallet"
+      participant(p): "org.tbma.Account"
+      operation: CREATE
+      resource(r): "org.tbma.BondWallet"
+      condition: (p.role.isInvestor && p.getIdentifier() === r.owner.getIdentifier() && p.getIdentifier() === r.couponWallet.owner.getIdentifier() && r.balance === 0)
+      action: ALLOW
+    }
   // MoneyWallet
-  rule CreateMoneyWallet {
-    description: "Allow all to create *empty* money wallet"
-    participant(p): "org.tbma.Account"
-    operation: CREATE
-    resource(r): "org.tbma.MoneyWallet"
-    condition: (p.getIdentifier() === r.owner.getIdentifier() && r.balance === 0)
-    action: ALLOW
-  }
-
+    rule CreateMoneyWallet {
+      description: "Allow all to create *empty* money wallet"
+      participant(p): "org.tbma.Account"
+      operation: CREATE
+      resource(r): "org.tbma.MoneyWallet"
+      condition: (p.getIdentifier() === r.owner.getIdentifier() && r.balance === 0)
+      action: ALLOW
+    }
+  // BondSubscriptionContract
+    rule CreateBondSubscriptionContract {
+      description: "Allow bond owner to create Bond Subscription Contract"
+      participant(p): "org.tbma.Account"
+      operation: CREATE
+      resource(r): "org.tbma.BondSubscriptionContract"
+      condition: (p.getIdentifier() === r.bond.issuer.getIdentifier() && p.getIdentifier() === r.issuerMoneyWallet.owner.getIdentifier())
+      action: ALLOW
+    }
 // Create Transaction
-  // BondPurchaseTransaction
-  rule CreateBondPurchaseTransaction {
-    description: "Allow all to create bond purchase transaction"
-    participant(p): "org.tbma.Account"
-    operation: CREATE
-    resource(tx): "org.tbma.BondPurchaseTransaction"
-    condition: (p.getIdentifier() === tx.moneyWallet.owner.getIdentifier() && p.getIdentifier() === tx.bondWallet.owner.getIdentifier())
-    action: ALLOW
-  }
+  // BondSubscriptionTransaction
+    rule CreateBondSubscriptionTransaction {
+      description: "Allow investor to create bond subscription transaction"
+      participant(p): "org.tbma.Account"
+      operation: CREATE
+      resource(r): "org.tbma.BondSubscriptionTransaction"
+      condition: (p.role.isInvestor && p.getIdentifier() === r.moneyWallet.owner.getIdentifier() && p.getIdentifier() === r.bondWallet.owner.getIdentifier())
+      action: ALLOW
+    }
+  // BondSubscriptionCloseSaleTransaction
+    rule CreateBondSubscriptionCloseSaleTransaction {
+      description: "Allow owner to create bond subscription calse sale transaction"
+      participant(p): "org.tbma.Account"
+      operation: CREATE
+      resource(r): "org.tbma.BondSubscriptionCloseSaleTransaction"
+      condition: (p.getIdentifier() === r.subscriptionContract.bond.issuer.getIdentifier())
+      action: ALLOW
+    }
   // CouponPayoutTransaction
-  rule CreateCouponPayoutTransaction {
-    description: "Allow all to create bond purchase transaction"
-    participant(p): "org.tbma.Account"
-    operation: CREATE
-    resource(tx): "org.tbma.CouponPayoutTransaction"
-    condition: (p.getIdentifier() === tx.moneyWallet.owner.getIdentifier() && p.getIdentifier() === tx.bond.issuer.getIdentifier())
-    action: ALLOW
-  }
+    rule CreateCouponPayoutTransaction {
+      description: "Allow all to create bond purchase transaction"
+      participant(p): "org.tbma.Account"
+      operation: CREATE
+      resource(tx): "org.tbma.CouponPayoutTransaction"
+      condition: (p.getIdentifier() === tx.moneyWallet.owner.getIdentifier() && p.getIdentifier() === tx.bond.issuer.getIdentifier())
+      action: ALLOW
+    }
   // BondBuyBackTransaction
-  rule CreateBondBuyBackTransaction {
-    description: "Allow Issuer to create bond buy back transaction"
-    participant(p): "org.tbma.Account"
-    operation: CREATE
-    resource(tx): "org.tbma.BondBuyBackTransaction"
-    condition: (p.getIdentifier() === tx.moneyWallet.owner.getIdentifier() && p.getIdentifier() === tx.bond.issuer.getIdentifier())
-    action: ALLOW
-  }
-  // MoneyDepositTransaction
-  rule CreateMoneyDepositTransaction {
-    description: "allow gateway to create money deposit transaction"
-    participant(p): "org.tbma.Account"
-    operation: CREATE
-    resource: "org.tbma.MoneyDepositTransaction"
-    condition: (p.role.isGateway)
-    action: ALLOW
-  }
-  // MoneyWithdrawTransaction
-  rule CreateMoneyWithdrawTransaction {
-    description: "allow gateway to create money withdraw transaction"
-    participant(p): "org.tbma.Account"
-    operation: CREATE
-    resource: "org.tbma.MoneyWithdrawTransaction"
-    condition: (p.role.isGateway)
-    action: ALLOW
-  }
+    rule CreateBondBuyBackTransaction {
+      description: "Allow Issuer to create bond buy back transaction"
+      participant(p): "org.tbma.Account"
+      operation: CREATE
+      resource(tx): "org.tbma.BondBuyBackTransaction"
+      condition: (p.getIdentifier() === tx.moneyWallet.owner.getIdentifier() && p.getIdentifier() === tx.bond.issuer.getIdentifier())
+      action: ALLOW
+    }
+  // MoneyMintTransaction
+    rule CreateMoneyMintTransaction {
+      description: "allow gateway to create money deposit transaction"
+      participant(p): "org.tbma.Account"
+      operation: CREATE
+      resource: "org.tbma.MoneyMintTransaction"
+      condition: (p.role.isGateway)
+      action: ALLOW
+    }
+  // MoneyBurnTransaction
+    rule CreateMoneyBurnTransaction {
+      description: "allow gateway to create money withdraw transaction"
+      participant(p): "org.tbma.Account"
+      operation: CREATE
+      resource: "org.tbma.MoneyBurnTransaction"
+      condition: (p.role.isGateway)
+      action: ALLOW
+    }
   // MoneyTransferTransaction
-  rule CreateMoneyTransferTransaction {
-    description: "allow gateway to create money withdraw transaction"
-    participant(p): "org.tbma.Account"
-    operation: CREATE
-    resource(r): "org.tbma.MoneyTransferTransaction"
-    condition: (p.getIdentifier() === r.from.owner.getIdentifier())
-    action: ALLOW
-  }
+    rule CreateMoneyTransferTransaction {
+      description: "allow gateway to create money withdraw transaction"
+      participant(p): "org.tbma.Account"
+      operation: CREATE
+      resource(r): "org.tbma.MoneyTransferTransaction"
+      condition: (p.getIdentifier() === r.from.owner.getIdentifier())
+      action: ALLOW
+    }
   // BondTransferTransaction
-  rule CreateBondTransferTransaction {
-    description: "allow gateway to create money withdraw transaction"
-    participant(p): "org.tbma.Account"
-    operation: CREATE
-    resource(r): "org.tbma.BondTransferTransaction"
-    condition: (p.getIdentifier() === r.from.owner.getIdentifier())
-    action: ALLOW
-  }
+    rule CreateBondTransferTransaction {
+      description: "allow gateway to create money withdraw transaction"
+      participant(p): "org.tbma.Account"
+      operation: CREATE
+      resource(r): "org.tbma.BondTransferTransaction"
+      condition: (p.getIdentifier() === r.from.owner.getIdentifier())
+      action: ALLOW
+    }
 
 // Update Via Transaction
-  // BondPurchaseTransaction
-  rule UpdateBondViaBondPurchaseTransaction {
-    description: "Allow update money wallet via bond purchase transaction"
-    participant: "org.tbma.Account"
-    operation: READ, UPDATE
-    resource: "org.tbma.Bond"
-    transaction: "org.tbma.BondPurchaseTransaction"
-    action: ALLOW
-  }
-  rule UpdateBondWalletViaBondPurchaseTransaction {
-    description: "Allow update money wallet via bond purchase transaction"
-    participant: "org.tbma.Account"
-    operation: READ, UPDATE
-    resource: "org.tbma.BondWallet"
-    transaction: "org.tbma.BondPurchaseTransaction"
-    action: ALLOW
-  }
-  rule UpdateMoneyWalletViaBondPurchaseTransaction {
-    description: "Allow update money wallet via bond purchase transaction"
-    participant: "org.tbma.Account"
-    operation: READ, UPDATE
-    resource: "org.tbma.MoneyWallet"
-    transaction: "org.tbma.BondPurchaseTransaction"
-    action: ALLOW
-  }
+  // BondSubscriptionTransaction
+    rule UpdateBondSubscriptionContractViaBondSubscriptionTransaction {
+      description: "Allow update bond subscription contract via bond subscription transaction"
+      participant: "org.tbma.Account"
+      operation: READ, UPDATE
+      resource: "org.tbma.BondSubscriptionContract"
+      transaction: "org.tbma.BondSubscriptionTransaction"
+      action: ALLOW
+    }
+    rule UpdateBondViaBondSubscriptionTransaction {
+      description: "Allow update money wallet via bond subscription transaction"
+      participant: "org.tbma.Account"
+      operation: READ, UPDATE
+      resource: "org.tbma.MoneyWallet"
+      transaction: "org.tbma.BondSubscriptionTransaction"
+      action: ALLOW
+    }
+  // BondSubscriptionCloseSaleTransaction
+    rule UpdateBondWalletViaBondSubscriptionCloseSaleTransaction {
+      description: "Allow update bond wallet via bond subscription close sale transaction"
+      participant: "org.tbma.Account"
+      operation: READ, UPDATE
+      resource: "org.tbma.BondWallet"
+      transaction: "org.tbma.BondSubscriptionCloseSaleTransaction"
+      action: ALLOW
+    }
+    rule UpdateBondViaBondSubscriptionCloseSaleTransaction {
+      description: "Allow update bond subscription contract via bond subscription close sale transaction"
+      participant: "org.tbma.Account"
+      operation: READ, UPDATE
+      resource: "org.tbma.Bond"
+      transaction: "org.tbma.BondSubscriptionCloseSaleTransaction"
+      action: ALLOW
+    }
+    rule UpdateBondSubscriptionContractViaBondSubscriptionCloseSaleTransaction {
+      description: "Allow update bond subscription contract via bond subscription close sale transaction"
+      participant: "org.tbma.Account"
+      operation: READ, UPDATE
+      resource: "org.tbma.BondSubscriptionContract"
+      transaction: "org.tbma.BondSubscriptionCloseSaleTransaction"
+      action: ALLOW
+    }
+    
   // CouponPayoutTransaction
-  rule UpdateMoneyWalletViaCouponPayoutTransaction {
-    description: "Allow update money wallet via bond purchase transaction"
-    participant: "org.tbma.Account"
-    operation: READ, UPDATE
-    resource: "org.tbma.MoneyWallet"
-    transaction: "org.tbma.CouponPayoutTransaction"
-    action: ALLOW
-  }
-  rule UpdateBondViaCouponPayoutTransaction {
-    description: "Allow update money wallet via bond purchase transaction"
-    participant: "org.tbma.Account"
-    operation: READ, UPDATE
-    resource: "org.tbma.Bond"
-    transaction: "org.tbma.CouponPayoutTransaction"
-    action: ALLOW
-  }
+    rule UpdateMoneyWalletViaCouponPayoutTransaction {
+      description: "Allow update money wallet via bond purchase transaction"
+      participant: "org.tbma.Account"
+      operation: READ, UPDATE
+      resource: "org.tbma.MoneyWallet"
+      transaction: "org.tbma.CouponPayoutTransaction"
+      action: ALLOW
+    }
+    rule UpdateBondViaCouponPayoutTransaction {
+      description: "Allow update money wallet via bond purchase transaction"
+      participant: "org.tbma.Account"
+      operation: READ, UPDATE
+      resource: "org.tbma.Bond"
+      transaction: "org.tbma.CouponPayoutTransaction"
+      action: ALLOW
+    }
   // BondBuyBackTransaction
-  rule UpdateMoneyWalletViaBondBuyBackTransaction {
-    description: "Allow update money wallet via bond buy back transaction"
-    participant: "org.tbma.Account"
-    operation: READ, UPDATE
-    resource: "org.tbma.MoneyWallet"
-    transaction: "org.tbma.BondBuyBackTransaction"
-    action: ALLOW
-  }
-  rule UpdateBondWalletViaBondBuyBackTransaction {
-    description: "Allow update bond wallet via bond buy back transaction"
-    participant: "org.tbma.Account"
-    operation: READ, UPDATE
-    resource: "org.tbma.BondWallet"
-    transaction: "org.tbma.BondBuyBackTransaction"
-    action: ALLOW
-  }
-  // MoneyDepositTransaction
-  rule UpdateBondViaMoneyDepositTransaction {
-    description: "Allow update money wallet via money deposit transaction"
-    participant: "org.tbma.Account"
-    operation: READ, UPDATE
-    resource: "org.tbma.MoneyWallet"
-    transaction: "org.tbma.MoneyDepositTransaction"
-    action: ALLOW
-  }
-  // MoneyWithdrawTransaction
-  rule UpdateBondViaMoneyWithdrawTransaction {
-    description: "Allow update money wallet via money withdraw transaction"
-    participant: "org.tbma.Account"
-    operation: READ, UPDATE
-    resource: "org.tbma.MoneyWallet"
-    transaction: "org.tbma.MoneyWithdrawTransaction"
-    action: ALLOW
-  }
+    rule UpdateMoneyWalletViaBondBuyBackTransaction {
+      description: "Allow update money wallet via bond buy back transaction"
+      participant: "org.tbma.Account"
+      operation: READ, UPDATE
+      resource: "org.tbma.MoneyWallet"
+      transaction: "org.tbma.BondBuyBackTransaction"
+      action: ALLOW
+    }
+    rule UpdateBondWalletViaBondBuyBackTransaction {
+      description: "Allow update bond wallet via bond buy back transaction"
+      participant: "org.tbma.Account"
+      operation: READ, UPDATE
+      resource: "org.tbma.BondWallet"
+      transaction: "org.tbma.BondBuyBackTransaction"
+      action: ALLOW
+    }
+    rule UpdateBondViaBondBuyBackTransaction {
+      description: "Allow update bond wallet via bond buy back transaction"
+      participant: "org.tbma.Account"
+      operation: READ, UPDATE
+      resource: "org.tbma.Bond"
+      transaction: "org.tbma.BondBuyBackTransaction"
+      action: ALLOW
+    }
+  // MoneyMintTransaction
+    rule UpdateBondViaMoneyMintTransaction {
+      description: "Allow update money wallet via money deposit transaction"
+      participant: "org.tbma.Account"
+      operation: READ, UPDATE
+      resource: "org.tbma.MoneyWallet"
+      transaction: "org.tbma.MoneyMintTransaction"
+      action: ALLOW
+    }
+  // MoneyBurnTransaction
+    rule UpdateBondViaMoneyBurnTransaction {
+      description: "Allow update money wallet via money withdraw transaction"
+      participant: "org.tbma.Account"
+      operation: READ, UPDATE
+      resource: "org.tbma.MoneyWallet"
+      transaction: "org.tbma.MoneyBurnTransaction"
+      action: ALLOW
+    }
   // MoneyTransferTransaction
-  rule UpdateBondViaMoneyTransferTransaction {
-    description: "Allow update money wallet via money transfer transaction"
-    participant: "org.tbma.Account"
-    operation: READ, UPDATE
-    resource: "org.tbma.MoneyWallet"
-    transaction: "org.tbma.MoneyTransferTransaction"
-    action: ALLOW
-  }
+    rule UpdateBondViaMoneyTransferTransaction {
+      description: "Allow update money wallet via money transfer transaction"
+      participant: "org.tbma.Account"
+      operation: READ, UPDATE
+      resource: "org.tbma.MoneyWallet"
+      transaction: "org.tbma.MoneyTransferTransaction"
+      action: ALLOW
+    }
   // BondTransferTransaction
-  rule UpdateBondViaBondTransferTransaction {
-    description: "Allow update bond wallet via bond transfer transaction"
-    participant: "org.tbma.Account"
-    operation: READ, UPDATE
-    resource: "org.tbma.BondWallet"
-    transaction: "org.tbma.BondTransferTransaction"
-    action: ALLOW
-  }
-  
+    rule UpdateBondViaBondTransferTransaction {
+      description: "Allow update bond wallet via bond transfer transaction"
+      participant: "org.tbma.Account"
+      operation: READ, UPDATE
+      resource: "org.tbma.BondWallet"
+      transaction: "org.tbma.BondTransferTransaction"
+      action: ALLOW
+    }
 
 // System
  rule SystemACL {

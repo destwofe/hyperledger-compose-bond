@@ -1,6 +1,8 @@
 const { BusinessNetworkConnection } = require('composer-client')
 const uuidv4 = require('uuid/v4')
 
+// const { getSafe } = require('./utils')
+
 const argsIsExist = (...args) => {
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
@@ -57,6 +59,11 @@ class BondNetwork {
     }
   }
 
+  async query(queryString, queryData) {
+    const query = this.connection.buildQuery(queryString, queryData)
+    return this.connection.query(query)
+  }
+
   async RoleUpdateTransaction({ account, role, isGrant }) {
     return this.submitTransaction({
       $class: 'org.tbma.RoleUpdateTransaction',
@@ -66,7 +73,7 @@ class BondNetwork {
     })
   }
 
-  async MoneyTransferTransaction(from, to, amount) {
+  async MoneyTransferTransaction({ from, to, amount }) {
     return this.submitTransaction({
       $class: 'org.tbma.MoneyTransferTransaction',
       from: `resource:org.tbma.MoneyWallet#${from}`,
@@ -75,23 +82,29 @@ class BondNetwork {
     })
   }
 
-  async BondTransferTransaction({ bond, from, to, amount }) {
+  async BondTransferTransaction({ from, to, amount }) {
     return this.submitTransaction({
       $class: 'org.tbma.BondTransferTransaction',
-      bond: `resource:org.tbma.Bond#${bond}`,
       from: `resource:org.tbma.BondWallet#${from}`,
       to: `resource:org.tbma.BondWallet#${to}`,
       amount,
     })
   }
 
-  async BondPurchaseTransaction({ bond, moneyWallet, bondWallet, amount }) {
+  async BondSubscriptionTransaction({ subscriptionContract, moneyWallet, bondWallet, amount }) {
     return this.submitTransaction({
-      $class: 'org.tbma.BondPurchaseTransaction',
-      bond: `resource:org.tbma.Bond#${bond}`,
+      $class: 'org.tbma.BondSubscriptionTransaction',
+      subscriptionContract: `resource:org.tbma.BondSubscriptionContract#${subscriptionContract}`,
       bondWallet: `resource:org.tbma.BondWallet#${bondWallet}`,
       moneyWallet: `resource:org.tbma.MoneyWallet#${moneyWallet}`,
       amount,
+    })
+  }
+
+  async BondSubscriptionCloseSaleTransaction({ subscriptionContract }) {
+    return this.submitTransaction({
+      $class: 'org.tbma.BondSubscriptionCloseSaleTransaction',
+      subscriptionContract: `resource:org.tbma.BondSubscriptionContract#${subscriptionContract}`,
     })
   }
 
@@ -103,9 +116,17 @@ class BondNetwork {
     })
   }
 
+  async BondBuyBackTransaction({ moneyWallet, bond }) {
+    return this.submitTransaction({
+      $class: 'org.tbma.BondBuyBackTransaction',
+      bond: `resource:org.tbma.Bond#${bond}`,
+      moneyWallet: `resource:org.tbma.MoneyWallet#${moneyWallet}`,
+    })
+  }
+
   async MoneyDepositTransaction({ to, amount }) {
     return this.submitTransaction({
-      $class: 'org.tbma.MoneyDepositTransaction',
+      $class: 'org.tbma.MoneyMintTransaction',
       to: `resource:org.tbma.MoneyWallet#${to}`,
       amount,
     })
@@ -113,27 +134,54 @@ class BondNetwork {
 
   async MoneyWithdrawTransaction({ from, amount }) {
     return this.submitTransaction({
-      $class: 'org.tbma.MoneyWithdrawTransaction',
+      $class: 'org.tbma.MoneyBurnTransaction',
       from: `resource:org.tbma.MoneyWallet#${from}`,
       amount,
     })
   }
 
-  async getHistorians() {
+  async getHistorians(id) {
     try {
-      const historians = await this.historian.getAll()
-      return historians
+      if (id) return this.historian.resolve(id)
+      return this.historian.getAll()
     } catch (error) {
       return Promise.reject(new Error(error.details))
     }
   }
 
+  // async getEvents(eventName) {
   async getEvents() {
     try {
       const historians = await this.getHistorians()
+      // const validHistorians = await Promise.all(historians.filter(a => a.eventsEmitted.find(b => b.$type === eventName) != null).map(a => this.getHistorians(a.transactionId)))
+      // console.log(JSON.stringify(validHistorians))
+      // console.log(JSON.stringify(validHistorians.map(a => a.eventsEmitted)))
       return [].concat(...historians.map(a => a.eventsEmitted))
     } catch (error) {
+      console.log(error)
       return Promise.reject(new Error(error.details))
+    }
+  }
+
+  async getMoneyTransferEvents({ moneyWallet }) {
+    try {
+      const events = (await this.getEvents()).map(a => this.serializer.toJSON(a))
+      return events.filter(a => (a.from === `resource:org.tbma.MoneyWallet#${moneyWallet}` || a.to === `resource:org.tbma.MoneyWallet#${moneyWallet}`))
+    } catch (error) {
+      return Promise.reject(error)
+    }
+  }
+
+  async getBondTransferEvents({ bondWallet, bond }) {
+    try {
+      // const events = (await this.getEvents('BondTransferEvent')).map(a => this.serializer.toJSON(a))
+      const events = (await this.getEvents()).map(a => this.serializer.toJSON(a))
+      if (bondWallet) return events.filter(a => (a.from === `resource:org.tbma.BondWallet#${bondWallet}` || a.to === `resource:org.tbma.BondWallet#${bondWallet}`))
+      // if (bondWallet) return events.filter(a => (getSafe(() => a.from.id) === bondWallet || getSafe(() => a.to.id) === bondWallet))
+      if (bond) return events.filter(a => (a.bond === `resource:org.tbma.Bond#${bond}`))
+      return []
+    } catch (error) {
+      return Promise.reject(error)
     }
   }
 
@@ -142,6 +190,17 @@ class BondNetwork {
       const accountRegistry = await this.connection.getParticipantRegistry(`${this.NS}.Account`)
       if (!id) return accountRegistry.getAll()
       if (await accountRegistry.exists(id)) return accountRegistry.get(id)
+      return undefined
+    } catch (error) {
+      return Promise.reject(new Error(error.details))
+    }
+  }
+
+  async getBondSubscriptionContract(id) {
+    try {
+      const bondSubscriptionRegistry = await this.connection.getAssetRegistry(`${this.NS}.BondSubscriptionContract`)
+      if (!id) return bondSubscriptionRegistry.resolveAll()
+      if (await bondSubscriptionRegistry.exists(id)) return bondSubscriptionRegistry.resolve(id)
       return undefined
     } catch (error) {
       return Promise.reject(new Error(error.details))
@@ -197,8 +256,8 @@ class BondNetwork {
   async getMoneyWallets(id) {
     try {
       const moneyWalletRegistry = await this.connection.getAssetRegistry(`${this.NS}.MoneyWallet`)
-      if (!id) return moneyWalletRegistry.getAll()
-      if (await moneyWalletRegistry.exists(id)) return moneyWalletRegistry.get(id)
+      if (!id) return moneyWalletRegistry.resolveAll()
+      if (await moneyWalletRegistry.exists(id)) return moneyWalletRegistry.resolve(id)
       return undefined
     } catch (error) {
       return Promise.reject(new Error(error.details))
@@ -222,30 +281,49 @@ class BondNetwork {
     }
   }
 
-  async createBond({ symbol, parValue, couponRate, paymentFrequency, issueDate, maturity, issuer, issuerMoneyWallet }) {
+  async createBond({ symbol, parValue, couponRate, paymentFrequency, issuer, issueTerm }) {
     try {
-      if (!argsIsExist(symbol, parValue, couponRate, paymentFrequency, issueDate, maturity, issuer, issuerMoneyWallet)) return Promise.reject(new Error('missing required params'))
-      const [ownerParti, couponwalletAsset] = await Promise.all([
-        this.getAccounts(issuer), this.getMoneyWallets(issuerMoneyWallet),
-      ])
-      // if (argsIsExist(bondAsset)) return Promise.reject(new Error('bond asset is already exist'))
-      if (!argsIsExist(ownerParti, couponwalletAsset)) return Promise.reject(new Error('asset is not found'))
+      if (!argsIsExist(symbol, parValue, couponRate, paymentFrequency, issuer, issueTerm)) return Promise.reject(new Error('missing required params'))
+      const ownerParti = await this.getAccounts(issuer)
+      if (!argsIsExist(ownerParti)) return Promise.reject(new Error('asset is not found'))
 
       const bond = this.factory.newResource(this.NS, 'Bond', uuidv4())
       bond.symbol = symbol
       bond.parValue = parValue
       bond.couponRate = couponRate
       bond.paymentFrequency = paymentFrequency
-      bond.issueDate = issueDate
-      bond.maturity = maturity
       bond.totalSupply = 0
+      bond.issueTerm = issueTerm // month
       bond.issuer = this.factory.newRelationship(this.NS, 'Account', issuer)
-      bond.issuerMoneyWallet = this.factory.newRelationship(this.NS, 'MoneyWallet', issuerMoneyWallet)
       bond.couponPayout = []
 
       const bondRegistry = await this.connection.getAssetRegistry(`${this.NS}.Bond`)
       await bondRegistry.add(bond)
       return Promise.resolve({ bond: this.serializer.toJSON(bond) })
+    } catch (error) {
+      return Promise.reject(error)
+    }
+  }
+
+  async createBondSubscriptionContract({ bond, hardCap, issuerMoneyWallet }) {
+    try {
+      console.log({ bond, hardCap, issuerMoneyWallet })
+      if (!argsIsExist(bond, issuerMoneyWallet)) return Promise.reject(new Error('missing required params'))
+
+      const bondSubscriptionContract = this.factory.newResource(this.NS, 'BondSubscriptionContract', uuidv4())
+      bondSubscriptionContract.bond = this.factory.newRelationship(this.NS, 'Bond', bond)
+      bondSubscriptionContract.subscripers = []
+      bondSubscriptionContract.isCloseSale = false
+      bondSubscriptionContract.hardCap = hardCap
+      bondSubscriptionContract.soldAmount = 0
+      bondSubscriptionContract.issuerMoneyWallet = this.factory.newRelationship(this.NS, 'MoneyWallet', issuerMoneyWallet)
+
+      console.log(this.serializer.toJSON(bondSubscriptionContract))
+
+      const bondSubscriptionContractRegistry = await this.connection.getAssetRegistry(`${this.NS}.BondSubscriptionContract`)
+
+      await bondSubscriptionContractRegistry.add(bondSubscriptionContract)
+      return Promise.resolve({ bondSubscriptionContract: this.serializer.toJSON(bondSubscriptionContract) })
     } catch (error) {
       return Promise.reject(error)
     }
