@@ -63,7 +63,7 @@ export default connect(mapStateToProps, { fetchBondSubscriptionContract, setModa
                 </TableHead>
                 <TableBody>
                   <TableRow><TableCell variant="head">Selling status</TableCell><TableCell>{contract.isCloseSale ? 'Closed Sale' : 'On Sale'}</TableCell><TableCell variant="head">Sold Amount</TableCell><TableCell>{Number(contract.soldAmount).toLocaleString()} unit</TableCell></TableRow>
-                  <TableRow><TableCell variant="head">Hard Cap</TableCell><TableCell>{Number(contract.hardCap).toLocaleString()} unit</TableCell><TableCell variant="head">Remain Amount</TableCell><TableCell>{Number(contract.hardCap - contract.soldAmount).toLocaleString()} unit</TableCell></TableRow>
+                  <TableRow><TableCell variant="head">Sale Amount</TableCell><TableCell>{Number(contract.hardCap).toLocaleString()} unit</TableCell><TableCell variant="head">Remain Amount</TableCell><TableCell>{Number(contract.hardCap - contract.soldAmount).toLocaleString()} unit</TableCell></TableRow>
                   <TableRow><TableCell><Button color="primary" onClick={() => this.state.collapseExpandFor === contract.id ? this.setState({ collapseExpandFor: null }) : this.setState({ collapseExpandFor: contract.id })} style={{padding: 0}}>Subscripers({contract.subscripers.length})</Button></TableCell><TableCell colSpan={3}><Collapse in={this.state.collapseExpandFor === contract.id}><Subscripers /></Collapse></TableCell></TableRow>
                 </TableBody>
                 {role.isGateway || contract.isCloseSale || (role.isIssuer && bond.issuer !== accountId) ? null : <TableFooter>

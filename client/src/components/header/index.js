@@ -6,21 +6,22 @@ import { AccountCircle } from '@material-ui/icons'
 import { tabChange } from '../../actions/view'
 import { requestLogout } from '../../actions/account'
 
-export default connect((state) => ({ view: state.view, role: state.account.accountData.role }), { tabChange, requestLogout })(class extends Component {
+export default connect((state) => ({ view: state.view, role: state.account.accountData.role, accountData: state.account.accountData }), { tabChange, requestLogout })(class extends Component {
   state = {
     anchorEl: null
   }
 
   render() {
     // console.log(this.props.role)
-    const { role } = this.props
+    const { role, accountData } = this.props
     return <div>
       <AppBar position="static">
         <Toolbar>
           <Typography variant="headline" color="inherit" style={{ flex: 1 }}>
             Bond Book
           </Typography>
-          <Typography variant="headline" color="inherit">
+          <Typography variant="title" color="inherit">
+          {accountData.name}
           </Typography>
           <IconButton onClick={(event) => this.setState({ anchorEl: event.currentTarget })} color="inherit">
             <AccountCircle />
@@ -52,8 +53,8 @@ export default connect((state) => ({ view: state.view, role: state.account.accou
           value={this.props.view.tabNumber}
         >
           <Tab label="Bonds" disabled={role.isGateway} onClick={() => this.props.tabChange(0)} />
-          <Tab label="Bond Accounts" disabled={role.isGateway} onClick={() => this.props.tabChange(1)} />
-          <Tab label="Money Accounts" onClick={() => this.props.tabChange(2)} />
+          <Tab label="Depository Accounts" disabled={role.isGateway} onClick={() => this.props.tabChange(1)} />
+          <Tab label="Bank Accounts" onClick={() => this.props.tabChange(2)} />
         </Tabs>
       </Paper>
     </div>

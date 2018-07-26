@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
-import { Typography, Table, TableBody, TableRow, TableCell, TableHead, TableFooter, TablePagination } from '@material-ui/core'
+import { Table, TableBody, TableRow, TableCell, TableHead } from '@material-ui/core'
 
 import { fetchBondWallet } from "../../actions/asset";
 import { getSafe } from '../../utils';

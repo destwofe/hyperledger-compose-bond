@@ -10,11 +10,17 @@ import { ISSUE_BOND_MODAL } from '../modal'
 export default connect((state) => ({ bonds: state.asset.bonds }), { fetchBond, setBondSelectedId, setModalOpenName })(class extends Component {
   state = {
     page: 0,
-    collapseExpandFor: null
+    collapseExpandFor: null,
+    filteredBonds: this.props.bonds
   }
 
   componentDidMount() {
     this.props.fetchBond()
+  }
+
+  handlerFilterChange = (event) => {
+    const value = event.target.value
+    this.setState({filteredBonds: this.props.bonds.filter(a => a.symbol.toLowerCase().indexOf(value) !== -1 || a.issuer.replace('resource:org.tbma.Account#', '').toLowerCase().indexOf(value) !== -1)})
   }
 
   collapseExpandHandler = (id) => {
@@ -30,16 +36,17 @@ export default connect((state) => ({ bonds: state.asset.bonds }), { fetchBond, s
     const page = this.state.page
 
     const bonds = this.props.bonds
+    const {filteredBonds} = this.state
     return (<Table>
         {bonds.length <= 0 ? null : <TableHead>
           <TableRow>
             <TableCell>
-              <TextField fullWidth label="Search" onChange={() => { }} />
+              <TextField fullWidth label="Search" onChange={this.handlerFilterChange} />
             </TableCell>
           </TableRow>
         </TableHead>}
         {bonds.length <= 0 ? null : <TableBody>
-          {bonds.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(bond =>
+          {filteredBonds.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(bond =>
             <TableRow key={bond.id} style={{ height: 0 }} onClick={() => this.props.setBondSelectedId(bond.id)}>
               <TableCell style={{ padding: 0 }}>
                 <Card style={{ margin: 0 }}>
@@ -69,7 +76,7 @@ export default connect((state) => ({ bonds: state.asset.bonds }), { fetchBond, s
         <TableFooter>
           {bonds.length <= 0 ? null : <TableRow>
             <TablePagination
-              count={bonds.length}
+              count={filteredBonds.length}
               rowsPerPage={rowsPerPage}
               page={page}
               onChangePage={(event, page) => { this.setState({ page }) }}
