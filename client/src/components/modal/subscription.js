@@ -58,7 +58,7 @@ export default connect(mapStateToProps, { setModalOpenName, submitSubscriptionTr
             <Grid item sm={9} style={{ paddingTop: 15, paddingBottom: 20 }}>
               <TextField fullWidth select label="Bond Wallet"
                 value={this.state.bondWallet}
-                helperText={`balance ${getSafe(() => Number(bondWallets.find(a => a.id === this.state.bondWallet).balance).toLocaleString()) || 0} THB`}
+                helperText={`balance ${getSafe(() => Number(bondWallets.find(a => a.id === this.state.bondWallet).balance).toLocaleString()) || 0} Unit`}
                 onChange={(event) => this.setState({ bondWallet: event.target.value })} >
                 {bondWallets.map(bondWallet => <MenuItem key={bondWallet.id} value={bondWallet.id}>{`${bondWallet.id}`}</MenuItem>)}
               </TextField>

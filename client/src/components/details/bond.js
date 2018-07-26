@@ -1,8 +1,9 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
-import { Card, CardHeader, Typography, CardContent, Table, TableBody, TableRow, TableCell, TableHead, CardActions, Button, Grid, TableFooter } from '@material-ui/core'
+import { Card, CardHeader, Typography, CardContent, Table, TableBody, TableRow, TableCell, TableHead, CardActions, Button, Grid, TableFooter, Collapse } from '@material-ui/core'
 
 import BondHoldersTable from '../table/bondHolders'
+import Subscripers from '../table/subscripers';
 import BondCouponPayoutTransactionsTable from '../table/bondCouponPayoutTransactions'
 
 import { fetchBondSubscriptionContract } from '../../actions/asset'
@@ -21,6 +22,10 @@ const mapStateToProps = (state) => {
 }
 
 export default connect(mapStateToProps, { fetchBondSubscriptionContract, setModalOpenName, setSubscriptionContractSelectedId, submitSubscriptionCloseSaleTransaction })(class extends Component {
+  state = {
+    collapseExpandFor: null
+  }
+
   componentDidMount() {
     if (getSafe(() => this.props.bond.id)) this.props.fetchBondSubscriptionContract(this.props.bond.id)
   }
@@ -52,19 +57,20 @@ export default connect(mapStateToProps, { fetchBondSubscriptionContract, setModa
                   <TableRow style={{ height: 0 }}><TableCell colSpan="4">
                     <Grid container alignItems='flex-end' spacing={8}>
                       <Grid item><Typography variant="body1">Contract ID: </Typography></Grid>
-                      <Grid item><Typography variant="caption" style={{paddingBottom: 1}}>{contract.id}</Typography></Grid>
+                      <Grid item><Typography variant="caption" style={{ paddingBottom: 1 }}>{contract.id}</Typography></Grid>
                     </Grid>
                   </TableCell></TableRow>
                 </TableHead>
                 <TableBody>
-                  <TableRow><TableCell>Selling status</TableCell><TableCell>{contract.isCloseSale ? 'Closed Sale' : 'On Sale'}</TableCell><TableCell>Sold Amount</TableCell><TableCell>{Number(contract.soldAmount).toLocaleString()} unit</TableCell></TableRow>
-                  <TableRow><TableCell>Hard Cap</TableCell><TableCell>{Number(contract.hardCap).toLocaleString()} unit</TableCell><TableCell>Remain Amount</TableCell><TableCell>{Number(contract.hardCap-contract.soldAmount).toLocaleString()} unit</TableCell></TableRow>
+                  <TableRow><TableCell variant="head">Selling status</TableCell><TableCell>{contract.isCloseSale ? 'Closed Sale' : 'On Sale'}</TableCell><TableCell variant="head">Sold Amount</TableCell><TableCell>{Number(contract.soldAmount).toLocaleString()} unit</TableCell></TableRow>
+                  <TableRow><TableCell variant="head">Hard Cap</TableCell><TableCell>{Number(contract.hardCap).toLocaleString()} unit</TableCell><TableCell variant="head">Remain Amount</TableCell><TableCell>{Number(contract.hardCap - contract.soldAmount).toLocaleString()} unit</TableCell></TableRow>
+                  <TableRow><TableCell><Button color="primary" onClick={() => this.state.collapseExpandFor === contract.id ? this.setState({ collapseExpandFor: null }) : this.setState({ collapseExpandFor: contract.id })} style={{padding: 0}}>Subscripers({contract.subscripers.length})</Button></TableCell><TableCell colSpan={3}><Collapse in={this.state.collapseExpandFor === contract.id}><Subscripers /></Collapse></TableCell></TableRow>
                 </TableBody>
                 {role.isGateway || contract.isCloseSale || (role.isIssuer && bond.issuer !== accountId) ? null : <TableFooter>
                   <TableRow>
                     <TableCell colSpan={4}><Grid container justify="center" spacing={32}>
-                    {!role.isIssuer || bond.issuer !== accountId ? null : <Grid item><Button variant='contained' onClick={() => this.props.submitSubscriptionCloseSaleTransaction({ subscriptionContract: contract.id })}>Close Sale</Button></Grid>}
-                    {!role.isInvestor ? null : <Grid item><Button variant='contained' onClick={() => {this.props.setModalOpenName(SUBSCRIPTION_MODAL); this.props.setSubscriptionContractSelectedId(contract.id) }}>Subscribe</Button></Grid>}
+                      {!role.isIssuer || bond.issuer !== accountId ? null : <Grid item><Button variant='contained' onClick={() => this.props.submitSubscriptionCloseSaleTransaction({ subscriptionContract: contract.id })}>Close Sale</Button></Grid>}
+                      {!role.isInvestor ? null : <Grid item><Button variant='contained' onClick={() => { this.props.setModalOpenName(SUBSCRIPTION_MODAL); this.props.setSubscriptionContractSelectedId(contract.id) }}>Subscribe</Button></Grid>}
                     </Grid></TableCell>
                   </TableRow>
                 </TableFooter>}
@@ -74,10 +80,10 @@ export default connect(mapStateToProps, { fetchBondSubscriptionContract, setModa
             <BondHoldersTable />
             <BondCouponPayoutTransactionsTable />
           </CardContent>
-          {bond.isMature && false ? null : <CardActions style={{borderTopStyle: 'ridge'}}>
+          {!role.isIssuer || bond.issuer !== accountId || bond.isMature ? null : <CardActions style={{ borderTopStyle: 'ridge' }}>
             <Grid container alignItems="center" justify="center" spacing={32}>
-              {!role.isIssuer || bond.issuer !== accountId ? null : <Grid item><Button variant="contained" onClick={() => this.props.setModalOpenName(COUPON_PAYOUY_NAME)}>Coupon Payout</Button></Grid>}
-              {!role.isIssuer || bond.issuer !== accountId ? null : <Grid item><Button variant="contained" onClick={() => this.props.setModalOpenName(BOND_BUYBACK_NAME)}>Call Back</Button></Grid>}
+              <Grid item><Button variant="contained" onClick={() => this.props.setModalOpenName(COUPON_PAYOUY_NAME)}>Coupon Payout</Button></Grid>
+              <Grid item><Button variant="contained" onClick={() => this.props.setModalOpenName(BOND_BUYBACK_NAME)}>Call Back</Button></Grid>
             </Grid>
           </CardActions>}
         </Card>

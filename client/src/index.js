@@ -8,6 +8,9 @@ import { PersistGate } from 'redux-persist/integration/react'
 import Home from './components/home'
 import Login from './components/login'
 
+import { NotificationContainer } from 'react-notifications'
+import 'react-notifications/lib/notifications.css'
+
 const provider =
   <Provider store={store}>
     <PersistGate loading={null} persistor={persistor}>
@@ -17,6 +20,7 @@ const provider =
           <Route path='/' component={Home} />
         </Switch>
       </Router>
+      <NotificationContainer />
     </PersistGate>
   </Provider>
 

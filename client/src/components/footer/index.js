@@ -11,7 +11,7 @@ export default (props) =>
       value={0}
     >
       <Tab label="Bonds" />
-      <Tab label="Bond Wallets" />
-      <Tab label="Money Wallets" />
+      <Tab label="Bond Accounts" />
+      <Tab label="Money Accounts" />
     </Tabs>
   </Paper>

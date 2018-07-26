@@ -6,12 +6,14 @@ import { AccountCircle } from '@material-ui/icons'
 import { tabChange } from '../../actions/view'
 import { requestLogout } from '../../actions/account'
 
-export default connect((state) => ({ view: state.view }), { tabChange, requestLogout })(class extends Component {
+export default connect((state) => ({ view: state.view, role: state.account.accountData.role }), { tabChange, requestLogout })(class extends Component {
   state = {
     anchorEl: null
   }
 
   render() {
+    // console.log(this.props.role)
+    const { role } = this.props
     return <div>
       <AppBar position="static">
         <Toolbar>
@@ -20,10 +22,10 @@ export default connect((state) => ({ view: state.view }), { tabChange, requestLo
           </Typography>
           <Typography variant="headline" color="inherit">
           </Typography>
-          <IconButton onClick={(event) => this.setState({anchorEl: event.currentTarget})} color="inherit">
+          <IconButton onClick={(event) => this.setState({ anchorEl: event.currentTarget })} color="inherit">
             <AccountCircle />
           </IconButton>
-          
+
           <Menu
             anchorEl={this.state.anchorEl}
             anchorOrigin={{
@@ -35,9 +37,9 @@ export default connect((state) => ({ view: state.view }), { tabChange, requestLo
               horizontal: 'right',
             }}
             open={this.state.anchorEl != null}
-            onClose={() => this.setState({anchorEl: null})}
+            onClose={() => this.setState({ anchorEl: null })}
           >
-            <MenuItem onClick={() => {}}>Profile</MenuItem>
+            <MenuItem onClick={() => { }}>Profile</MenuItem>
             <MenuItem onClick={() => this.props.requestLogout()}>Logout</MenuItem>
           </Menu>
         </Toolbar>
@@ -49,9 +51,9 @@ export default connect((state) => ({ view: state.view }), { tabChange, requestLo
           centered
           value={this.props.view.tabNumber}
         >
-          <Tab label="Bonds" onClick={() => this.props.tabChange(0)} />
-          <Tab label="Bond Wallets" onClick={() => this.props.tabChange(1)} />
-          <Tab label="Money Wallets" onClick={() => this.props.tabChange(2)} />
+          <Tab label="Bonds" disabled={role.isGateway} onClick={() => this.props.tabChange(0)} />
+          <Tab label="Bond Accounts" disabled={role.isGateway} onClick={() => this.props.tabChange(1)} />
+          <Tab label="Money Accounts" onClick={() => this.props.tabChange(2)} />
         </Tabs>
       </Paper>
     </div>
