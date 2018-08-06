@@ -1,18 +1,18 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
-import { AppBar, Toolbar, Typography, IconButton, Paper, Tabs, Tab, Menu, MenuItem } from '@material-ui/core'
+import { AppBar, Toolbar, Typography, IconButton, Paper, Tabs, Tab, Menu, MenuItem, LinearProgress } from '@material-ui/core'
 import { AccountCircle } from '@material-ui/icons'
 
 import { tabChange } from '../../actions/view'
 import { requestLogout } from '../../actions/account'
+import { getSafe } from '../../utils';
 
-export default connect((state) => ({ view: state.view, role: state.account.accountData.role, accountData: state.account.accountData }), { tabChange, requestLogout })(class extends Component {
+export default connect((state) => ({ view: state.view, role: state.account.accountData.role, accountData: state.account.accountData, globalLoading: getSafe(() => state.loading.globalLoading) || 0 }), { tabChange, requestLogout })(class extends Component {
   state = {
     anchorEl: null
   }
 
   render() {
-    // console.log(this.props.role)
     const { role, accountData } = this.props
     return <div>
       <AppBar position="static">
@@ -45,6 +45,7 @@ export default connect((state) => ({ view: state.view, role: state.account.accou
           </Menu>
         </Toolbar>
       </AppBar>
+      {this.props.globalLoading > 0 ? <LinearProgress /> : null}
       <Paper>
         <Tabs
           indicatorColor="primary"

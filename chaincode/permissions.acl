@@ -32,13 +32,6 @@
       condition: (p.role.isGateway)
       action: ALLOW
     }
-    rule ViewBondSubscriptionContract { // TODO allow investor view only self subscription ?
-      description: "Allow all to view subscriptionContract"
-      participant: "org.tbma.Account"
-      operation: READ
-      resource: "org.tbma.BondSubscriptionContract"
-      action: ALLOW
-    }
   // Bond
     rule ViewBond {
       description: "Allow all to view bond"
@@ -110,15 +103,6 @@
       condition: (p.getIdentifier() === r.owner.getIdentifier() && r.balance === 0)
       action: ALLOW
     }
-  // BondSubscriptionContract
-    rule CreateBondSubscriptionContract {
-      description: "Allow bond owner to create Bond Subscription Contract"
-      participant(p): "org.tbma.Account"
-      operation: CREATE
-      resource(r): "org.tbma.BondSubscriptionContract"
-      condition: (p.getIdentifier() === r.bond.issuer.getIdentifier() && p.getIdentifier() === r.issuerMoneyWallet.owner.getIdentifier())
-      action: ALLOW
-    }
 // Create Transaction
   // BondSubscriptionTransaction
     rule CreateBondSubscriptionTransaction {
@@ -135,7 +119,16 @@
       participant(p): "org.tbma.Account"
       operation: CREATE
       resource(r): "org.tbma.BondSubscriptionCloseSaleTransaction"
-      condition: (p.getIdentifier() === r.subscriptionContract.bond.issuer.getIdentifier())
+      condition: (p.getIdentifier() === r.bond.issuer.getIdentifier())
+      action: ALLOW
+    }
+  // CouponSnapTransaction
+    rule CreateCouponSnapTransaction {
+      description: "Allow all to create bond purchase transaction"
+      participant(p): "org.tbma.Account"
+      operation: CREATE
+      resource(tx): "org.tbma.CouponSnapTransaction"
+      condition: (p.getIdentifier() === tx.bond.issuer.getIdentifier())
       action: ALLOW
     }
   // CouponPayoutTransaction
@@ -195,19 +188,19 @@
 
 // Update Via Transaction
   // BondSubscriptionTransaction
-    rule UpdateBondSubscriptionContractViaBondSubscriptionTransaction {
-      description: "Allow update bond subscription contract via bond subscription transaction"
-      participant: "org.tbma.Account"
-      operation: READ, UPDATE
-      resource: "org.tbma.BondSubscriptionContract"
-      transaction: "org.tbma.BondSubscriptionTransaction"
-      action: ALLOW
-    }
-    rule UpdateBondViaBondSubscriptionTransaction {
+    rule UpdateMoneyWalletViaBondSubscriptionTransaction {
       description: "Allow update money wallet via bond subscription transaction"
       participant: "org.tbma.Account"
       operation: READ, UPDATE
       resource: "org.tbma.MoneyWallet"
+      transaction: "org.tbma.BondSubscriptionTransaction"
+      action: ALLOW
+    }
+    rule UpdateBondViaBondSubscriptionTransaction {
+      description: "Allow update bond subscription contract via bond subscription close sale transaction"
+      participant: "org.tbma.Account"
+      operation: READ, UPDATE
+      resource: "org.tbma.Bond"
       transaction: "org.tbma.BondSubscriptionTransaction"
       action: ALLOW
     }
@@ -228,15 +221,15 @@
       transaction: "org.tbma.BondSubscriptionCloseSaleTransaction"
       action: ALLOW
     }
-    rule UpdateBondSubscriptionContractViaBondSubscriptionCloseSaleTransaction {
-      description: "Allow update bond subscription contract via bond subscription close sale transaction"
+  // CouponSnapTransaction
+    rule UpdateBondViaCouponSnapTransaction {
+      description: "Allow update money wallet via bond purchase transaction"
       participant: "org.tbma.Account"
       operation: READ, UPDATE
-      resource: "org.tbma.BondSubscriptionContract"
-      transaction: "org.tbma.BondSubscriptionCloseSaleTransaction"
+      resource: "org.tbma.Bond"
+      transaction: "org.tbma.CouponSnapTransaction"
       action: ALLOW
     }
-    
   // CouponPayoutTransaction
     rule UpdateMoneyWalletViaCouponPayoutTransaction {
       description: "Allow update money wallet via bond purchase transaction"

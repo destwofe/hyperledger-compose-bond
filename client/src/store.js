@@ -10,7 +10,7 @@ import Reducers from './reducers';
 
 export const history = createHistory()
 
-const persistedReducer = persistReducer({ key: 'Bondbook', storage, stateReconciler: hardSet }, Reducers)
+const persistedReducer = persistReducer({ key: 'Bondbook', storage, stateReconciler: hardSet, blacklist: ['loading'] }, Reducers)
 export const store = createStore(persistedReducer, compose(applyMiddleware(thunk, routerMiddleware(history))))
 export const persistor = persistStore(store, null, () => {
   if (!store.getState().account.accessToken) {

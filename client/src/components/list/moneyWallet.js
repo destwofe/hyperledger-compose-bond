@@ -2,19 +2,20 @@ import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import { Table, TableBody, TableRow, TableCell, Card, CardContent, Typography, Grid, Button, TableFooter, CircularProgress } from '@material-ui/core'
 
-import { fetchMoneyWallet, createMoneyWallet } from '../../actions/asset'
+import { createMoneyWallet } from '../../actions/asset'
+import { moneyWalletsPage } from '../../actions/graph'
 import { setMoneyWalletSelectedId } from '../../actions/view'
 
 // export default (props) => <Paper>Money Wallet list</Paper>
 
-export default connect((state) => ({ moneyWallets: state.asset.moneyWallets }), { setMoneyWalletSelectedId, fetchMoneyWallet, createMoneyWallet })(class extends Component {
+export default connect((state) => ({ moneyWallets: state.asset.moneyWallets }), { setMoneyWalletSelectedId, moneyWalletsPage, createMoneyWallet })(class extends Component {
   state = {
     page: 0,
     isLoading: false
   }
 
   componentDidMount() {
-    this.props.fetchMoneyWallet()
+    this.props.moneyWalletsPage()
   }
 
   createMoneyWalletHandler = () => {

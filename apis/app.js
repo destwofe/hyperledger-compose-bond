@@ -14,7 +14,7 @@ app.use(cors())
 
 app.use(morgan('dev'))
 
-app.use('/api', require('./common/route'))
+app.use('/api', require('./common/route/index'))
 
 
 /**

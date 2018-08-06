@@ -1,7 +1,7 @@
 const { BusinessNetworkConnection } = require('composer-client')
 const uuidv4 = require('uuid/v4')
 
-// const { getSafe } = require('./utils')
+const { getSafe } = require('./utils')
 
 const argsIsExist = (...args) => {
   for (let index = 0; index < args.length; index += 1) {
@@ -50,12 +50,13 @@ class BondNetwork {
    */
   async submitTransaction(json) {
     try {
+      console.log(json)
       const resource = this.serializer.fromJSON(json)
       await this.connection.submitTransaction(resource)
       return Promise.resolve({ success: true })
     } catch (error) {
       console.log(error)
-      return Promise.reject(new Error(error.details))
+      return Promise.reject(new Error(error.toString()))
     }
   }
 
@@ -91,28 +92,36 @@ class BondNetwork {
     })
   }
 
-  async BondSubscriptionTransaction({ subscriptionContract, moneyWallet, bondWallet, amount }) {
+  async BondSubscriptionTransaction({ bond, moneyWallet, bondWallet, amount }) {
     return this.submitTransaction({
       $class: 'org.tbma.BondSubscriptionTransaction',
-      subscriptionContract: `resource:org.tbma.BondSubscriptionContract#${subscriptionContract}`,
+      bond: `resource:org.tbma.Bond#${bond}`,
       bondWallet: `resource:org.tbma.BondWallet#${bondWallet}`,
       moneyWallet: `resource:org.tbma.MoneyWallet#${moneyWallet}`,
       amount,
     })
   }
 
-  async BondSubscriptionCloseSaleTransaction({ subscriptionContract }) {
+  async BondSubscriptionCloseSaleTransaction({ bond }) {
     return this.submitTransaction({
       $class: 'org.tbma.BondSubscriptionCloseSaleTransaction',
-      subscriptionContract: `resource:org.tbma.BondSubscriptionContract#${subscriptionContract}`,
+      bond: `resource:org.tbma.Bond#${bond}`,
     })
   }
 
-  async CouponPayoutTransaction({ moneyWallet, bond }) {
+  async CouponSnapTransaction({ bond }) {
+    return this.submitTransaction({
+      $class: 'org.tbma.CouponSnapTransaction',
+      bond: `resource:org.tbma.Bond#${bond}`,
+    })
+  }
+
+  async CouponPayoutTransaction({ moneyWallet, bond, couponPayoutIndex }) {
     return this.submitTransaction({
       $class: 'org.tbma.CouponPayoutTransaction',
       bond: `resource:org.tbma.Bond#${bond}`,
       moneyWallet: `resource:org.tbma.MoneyWallet#${moneyWallet}`,
+      couponPayoutIndex,
     })
   }
 
@@ -140,9 +149,11 @@ class BondNetwork {
     })
   }
 
-  async getHistorians(id) {
+  async getHistorians({ id = null, resolve = false }) {
     try {
-      if (id) return this.historian.resolve(id)
+      if (id && resolve) return this.historian.resolve(id)
+      if (id) return this.historian.get(id)
+      if (resolve) return this.historian.resolveAll()
       return this.historian.getAll()
     } catch (error) {
       return Promise.reject(new Error(error.details))
@@ -150,115 +161,114 @@ class BondNetwork {
   }
 
   // async getEvents(eventName) {
-  async getEvents() {
+  async getEvents({ resolve = false }) {
     try {
-      const historians = await this.getHistorians()
-      // const validHistorians = await Promise.all(historians.filter(a => a.eventsEmitted.find(b => b.$type === eventName) != null).map(a => this.getHistorians(a.transactionId)))
-      // console.log(JSON.stringify(validHistorians))
-      // console.log(JSON.stringify(validHistorians.map(a => a.eventsEmitted)))
+      const historians = await this.getHistorians({ resolve })
       return [].concat(...historians.map(a => a.eventsEmitted))
     } catch (error) {
-      console.log(error)
       return Promise.reject(new Error(error.details))
     }
   }
 
-  async getMoneyTransferEvents({ moneyWallet }) {
+  async getMoneyTransferEvents({ moneyWallet, resolve = false }) {
     try {
-      const events = (await this.getEvents()).map(a => this.serializer.toJSON(a))
-      return events.filter(a => (a.from === `resource:org.tbma.MoneyWallet#${moneyWallet}` || a.to === `resource:org.tbma.MoneyWallet#${moneyWallet}`))
+      if (resolve) {
+        let events = (await this.getEvents({ resolve })).filter(a => a.$class === 'org.tbma.MoneyTransferEvent')
+        if (moneyWallet) events = events.filter(event => getSafe(() => event.from.id) === moneyWallet || getSafe(() => event.to.id) === moneyWallet)
+        return events
+      }
+      let events = (await this.getEvents({ resolve })).map(a => this.serializer.toJSON(a)).filter(a => a.$class === 'org.tbma.MoneyTransferEvent')
+      if (moneyWallet) events = events.filter(a => (a.from === `resource:org.tbma.MoneyWallet#${moneyWallet}` || a.to === `resource:org.tbma.MoneyWallet#${moneyWallet}`))
+      return events
     } catch (error) {
       return Promise.reject(error)
     }
   }
 
-  async getBondTransferEvents({ bondWallet, bond }) {
+  async getBondTransferEvents({ bondWallet, bond, resolve = false }) {
     try {
-      // const events = (await this.getEvents('BondTransferEvent')).map(a => this.serializer.toJSON(a))
-      const events = (await this.getEvents()).map(a => this.serializer.toJSON(a))
-      if (bondWallet) return events.filter(a => (a.from === `resource:org.tbma.BondWallet#${bondWallet}` || a.to === `resource:org.tbma.BondWallet#${bondWallet}`))
-      // if (bondWallet) return events.filter(a => (getSafe(() => a.from.id) === bondWallet || getSafe(() => a.to.id) === bondWallet))
-      if (bond) return events.filter(a => (a.bond === `resource:org.tbma.Bond#${bond}`))
-      return []
+      if (resolve) {
+        let events = (await this.getEvents({ resolve })).filter(a => a.$class === 'org.tbma.BondTransferEvent')
+        if (bondWallet) events = events.filter(a => getSafe(() => a.from.id) === bondWallet || getSafe(() => a.to.id) === bondWallet)
+        if (bond) events = events.filter(a => a.bond.id === bond)
+        return events
+      }
+      let events = (await this.getEvents({ resolve: false })).map(a => this.serializer.toJSON(a)).filter(a => a.$class === 'org.tbma.BondTransferEvent')
+      if (bondWallet) events = events.filter(a => (a.from === `resource:org.tbma.BondWallet#${bondWallet}` || a.to === `resource:org.tbma.BondWallet#${bondWallet}`))
+      if (bond) events = events.filter(a => (a.bond === `resource:org.tbma.Bond#${bond}`))
+      return events
     } catch (error) {
       return Promise.reject(error)
     }
   }
 
-  async getAccounts(id) {
+  async getAccounts({ id, resolve }) {
     try {
       const accountRegistry = await this.connection.getParticipantRegistry(`${this.NS}.Account`)
-      if (!id) return accountRegistry.getAll()
-      if (await accountRegistry.exists(id)) return accountRegistry.get(id)
-      return undefined
+      if (id && resolve && await accountRegistry.exists(id)) return accountRegistry.resolve(id)
+      if (id && await accountRegistry.exists(id)) return accountRegistry.get(id)
+      if (resolve) return accountRegistry.resolveAll()
+      return accountRegistry.getAll()
     } catch (error) {
       return Promise.reject(new Error(error.details))
     }
   }
 
-  async getBondSubscriptionContract(id) {
-    try {
-      const bondSubscriptionRegistry = await this.connection.getAssetRegistry(`${this.NS}.BondSubscriptionContract`)
-      if (!id) return bondSubscriptionRegistry.resolveAll()
-      if (await bondSubscriptionRegistry.exists(id)) return bondSubscriptionRegistry.resolve(id)
-      return undefined
-    } catch (error) {
-      return Promise.reject(new Error(error.details))
-    }
-  }
-
-  async getBonds(id) {
+  async getBonds({ id, resolve = false }) {
     try {
       const bondRegistry = await this.connection.getAssetRegistry(`${this.NS}.Bond`)
-      if (!id) return bondRegistry.getAll()
-      if (await bondRegistry.exists(id)) return bondRegistry.resolve(id)
-      return undefined
+      if (id && resolve && await bondRegistry.exists(id)) return bondRegistry.resolve(id)
+      if (id && await bondRegistry.exists(id)) return bondRegistry.get(id)
+      if (resolve) return bondRegistry.resolveAll()
+      return bondRegistry.getAll()
     } catch (error) {
       return Promise.reject(new Error(error.details))
     }
   }
 
-  async getBondWallets(id) {
+  async getBondWallets({ id, resolve = false }) {
     try {
       const bondWalletRegistry = await this.connection.getAssetRegistry(`${this.NS}.BondWallet`)
-      if (!id) return bondWalletRegistry.resolveAll()
-      if (await bondWalletRegistry.exists(id)) return bondWalletRegistry.resolve(id)
-      return undefined
+      if (id && resolve && await bondWalletRegistry.exists(id)) return bondWalletRegistry.resolve(id)
+      if (id && await bondWalletRegistry.exists(id)) return bondWalletRegistry.get(id)
+      if (resolve) return bondWalletRegistry.resolveAll()
+      return bondWalletRegistry.getAll()
     } catch (error) {
       return Promise.reject(new Error(error.details))
     }
   }
 
-  async getBondWalletByOwner(owner) {
+  async getBondWalletByOwner({ owner, resolve = false }) {
     try {
       const [bondWalletRegistry, bondWallets] = await Promise.all([
         this.connection.getAssetRegistry(`${this.NS}.BondWallet`),
         this.connection.query('bondWalletByHolder', { owner: `resource:org.tbma.Account#${owner}` }),
       ])
-      return Promise.all(bondWallets.map(bondWallet => bondWalletRegistry.resolve(bondWallet.id)))
+      return resolve ? Promise.all(bondWallets.map(bondWallet => bondWalletRegistry.resolve(bondWallet.id))) : bondWallets
     } catch (error) {
       return Promise.reject(new Error(error.details))
     }
   }
 
-  async getBondWalletByBond(bond) {
+  async getBondWalletByBond({ bond, resolve = false }) {
     try {
       const [bondWalletRegistry, bondWallets] = await Promise.all([
         this.connection.getAssetRegistry(`${this.NS}.BondWallet`),
         this.connection.query('bondWalletByBond', { bond: `resource:org.tbma.Bond#${bond}` }),
       ])
-      return Promise.all(bondWallets.map(bondWallet => bondWalletRegistry.resolve(bondWallet.id)))
+      return resolve ? Promise.all(bondWallets.map(bondWallet => bondWalletRegistry.resolve(bondWallet.id))) : bondWallets
     } catch (error) {
       return Promise.reject(new Error(error.details))
     }
   }
 
-  async getMoneyWallets(id) {
+  async getMoneyWallets({ id, resolve = false }) {
     try {
       const moneyWalletRegistry = await this.connection.getAssetRegistry(`${this.NS}.MoneyWallet`)
-      if (!id) return moneyWalletRegistry.resolveAll()
-      if (await moneyWalletRegistry.exists(id)) return moneyWalletRegistry.resolve(id)
-      return undefined
+      if (id && resolve && await moneyWalletRegistry.exists(id)) return moneyWalletRegistry.resolve(id)
+      if (id && await moneyWalletRegistry.exists(id)) return moneyWalletRegistry.get(id)
+      if (resolve) return moneyWalletRegistry.resolveAll()
+      return moneyWalletRegistry.getAll()
     } catch (error) {
       return Promise.reject(new Error(error.details))
     }
@@ -281,12 +291,19 @@ class BondNetwork {
     }
   }
 
-  async createBond({ symbol, parValue, couponRate, paymentFrequency, issuer, issueTerm }) {
+  async createBond({ symbol, parValue, couponRate, paymentFrequency, issuer, issueTerm, hardCap, issuerMoneyWallet }) {
     try {
-      if (!argsIsExist(symbol, parValue, couponRate, paymentFrequency, issuer, issueTerm)) return Promise.reject(new Error('missing required params'))
-      const ownerParti = await this.getAccounts(issuer)
-      if (!argsIsExist(ownerParti)) return Promise.reject(new Error('asset is not found'))
+      if (!argsIsExist(symbol, parValue, couponRate, paymentFrequency, issuer, issueTerm, hardCap, issuerMoneyWallet)) return Promise.reject(new Error('missing required params'))
 
+      const [issuerObj, issuerMoneyWalletObj] = await Promise.all([this.getAccounts(issuer), this.getMoneyWallets(issuerMoneyWallet)])
+      if (!argsIsExist(issuerObj, issuerMoneyWalletObj)) return Promise.reject(new Error('asset is not found'))
+
+      const subscriptionContract = this.factory.newConcept(this.NS, 'SubscriptionContract')
+      subscriptionContract.subscripers = []
+      subscriptionContract.isCloseSale = false
+      subscriptionContract.hardCap = hardCap
+      subscriptionContract.soldAmount = 0
+      subscriptionContract.issuerMoneyWallet = this.factory.newRelationship(this.NS, 'MoneyWallet', issuerMoneyWallet)
       const bond = this.factory.newResource(this.NS, 'Bond', uuidv4())
       bond.symbol = symbol
       bond.parValue = parValue
@@ -295,35 +312,12 @@ class BondNetwork {
       bond.totalSupply = 0
       bond.issueTerm = issueTerm // month
       bond.issuer = this.factory.newRelationship(this.NS, 'Account', issuer)
-      bond.couponPayout = []
+      bond.couponPayouts = []
+      bond.subscriptionContract = subscriptionContract
 
       const bondRegistry = await this.connection.getAssetRegistry(`${this.NS}.Bond`)
       await bondRegistry.add(bond)
       return Promise.resolve({ bond: this.serializer.toJSON(bond) })
-    } catch (error) {
-      return Promise.reject(error)
-    }
-  }
-
-  async createBondSubscriptionContract({ bond, hardCap, issuerMoneyWallet }) {
-    try {
-      console.log({ bond, hardCap, issuerMoneyWallet })
-      if (!argsIsExist(bond, issuerMoneyWallet)) return Promise.reject(new Error('missing required params'))
-
-      const bondSubscriptionContract = this.factory.newResource(this.NS, 'BondSubscriptionContract', uuidv4())
-      bondSubscriptionContract.bond = this.factory.newRelationship(this.NS, 'Bond', bond)
-      bondSubscriptionContract.subscripers = []
-      bondSubscriptionContract.isCloseSale = false
-      bondSubscriptionContract.hardCap = hardCap
-      bondSubscriptionContract.soldAmount = 0
-      bondSubscriptionContract.issuerMoneyWallet = this.factory.newRelationship(this.NS, 'MoneyWallet', issuerMoneyWallet)
-
-      console.log(this.serializer.toJSON(bondSubscriptionContract))
-
-      const bondSubscriptionContractRegistry = await this.connection.getAssetRegistry(`${this.NS}.BondSubscriptionContract`)
-
-      await bondSubscriptionContractRegistry.add(bondSubscriptionContract)
-      return Promise.resolve({ bondSubscriptionContract: this.serializer.toJSON(bondSubscriptionContract) })
     } catch (error) {
       return Promise.reject(error)
     }

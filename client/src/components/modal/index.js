@@ -8,6 +8,8 @@ import Subscription, { NAME as SubscriptionName } from './subscription'
 import Deposit, { NAME as DepositName } from './moneyDeposit'
 import Withdraw, { NAME as WithdrawName } from './moneyWithdraw'
 import CreateBondWallet, { NAME as CreateBondWalletName } from './createBondWallet'
+import BondBookClose, { NAME as BondBookCloseName } from './bondBookClose'
+import BondBookCloseDetails, { NAME as BondBookCloseDetailsName } from './bondBookCloseDetails'
 import CouponPayout, { NAME as CouponPayoutName } from './couponPayout'
 import BondBuyback, { NAME as BondBuybackName } from './bondBack'
 
@@ -19,7 +21,9 @@ export const SUBSCRIPTION_MODAL = SubscriptionName
 export const DEPOSIT_NAME = DepositName
 export const WITHDRAW_NAME = WithdrawName
 export const CREATE_BOND_WALLET_NAME = CreateBondWalletName
-export const COUPON_PAYOUY_NAME = CouponPayoutName
+export const BOND_BOOK_CLOSE_NAME = BondBookCloseName
+export const BOND_BOOK_CLOSE_DETAILS_MODAL = BondBookCloseDetailsName
+export const COUPON_PAYOUY_MODAL = CouponPayoutName
 export const BOND_BUYBACK_NAME = BondBuybackName
 
 export default connect((state) => ({ modalOpenName: state.view.modalOpenName }))(class extends Component {
@@ -41,7 +45,11 @@ export default connect((state) => ({ modalOpenName: state.view.modalOpenName }))
         return <Withdraw />
       case CREATE_BOND_WALLET_NAME:
         return <CreateBondWallet />
-      case COUPON_PAYOUY_NAME:
+      case BOND_BOOK_CLOSE_NAME:
+        return <BondBookClose />
+      case BOND_BOOK_CLOSE_DETAILS_MODAL:
+        return <BondBookCloseDetails />
+      case COUPON_PAYOUY_MODAL:
         return <CouponPayout />
       case BOND_BUYBACK_NAME:
         return <BondBuyback />

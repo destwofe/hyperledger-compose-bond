@@ -1,14 +1,14 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
-import { Typography, Table, TableBody, TableRow, TableCell, TableHead, TableFooter, TablePagination, Button } from '@material-ui/core'
+import { Table, TableBody, TableRow, TableCell, TableHead, TableFooter, TablePagination, Button } from '@material-ui/core'
 
 import { fetchTransaction } from '../../actions/transaction';
-import { setModalOpenName, setTransactionSelectedId } from '../../actions/view';
+import { setModalOpenName, setTransactionSelectedId, setCouponPayoutSelectedIndex } from '../../actions/view';
 import { getSafe } from '../../utils';
 
-import { NAME as transactionModalName } from '../modal/transaction'
+import { TRANSACTION_MODAL, COUPON_PAYOUY_MODAL, BOND_BOOK_CLOSE_DETAILS_MODAL } from '../modal/'
 
-export default connect((state) => ({ bond: state.asset.bonds.find((a) => a.id === state.view.bondSelectedId) || state.asset.bonds[0], transactions: state.transactions }), { fetchTransaction, setModalOpenName, setTransactionSelectedId })(class extends Component {
+export default connect((state) => ({ bond: state.asset.bonds.find((a) => a.id === state.view.bondSelectedId) || state.asset.bonds[0], transactions: state.transactions }), { fetchTransaction, setModalOpenName, setTransactionSelectedId, setCouponPayoutSelectedIndex })(class extends Component {
   state = {
     page: 0
   }
@@ -20,23 +20,32 @@ export default connect((state) => ({ bond: state.asset.bonds.find((a) => a.id ==
   }
 
   render() {
-    const { transactions, bond: { couponPayout } } = this.props
+    const { bond: { couponPayouts } } = this.props
     const rowsPerPage = 10
     const { page } = this.state
 
-    return couponPayout.length > 0 ? (
+    return couponPayouts.length > 0 ? (
       <Table>
         <TableHead>
-          <TableRow><TableCell colSpan="4"><Typography variant="subheading">Payout Transactions</Typography></TableCell></TableRow>
-          <TableRow><TableCell>Transaction ID</TableCell><TableCell>Coupon per unit</TableCell><TableCell>Payment Date</TableCell></TableRow>
+          <TableRow><TableCell>Closing Date</TableCell><TableCell>Coupon per unit</TableCell><TableCell style={{ textAlign: 'center' }}>ACTIONS</TableCell></TableRow>
         </TableHead>
         <TableBody>
-          {couponPayout.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(transaction => <TableRow key={transaction.transactionId}><TableCell><Button color="primary" onClick={() => { this.props.setModalOpenName(transactionModalName); this.props.setTransactionSelectedId(transaction.transactionId) }}>{transaction.transactionId}</Button></TableCell><TableCell>{transaction.couponPerUnit}</TableCell><TableCell>{new Date(getSafe(() => transactions.find((a) => a.transactionId === transaction.transactionId).transactionTimestamp)).toLocaleString()}</TableCell></TableRow>)}
+          {couponPayouts.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((transaction, index) => <TableRow key={transaction.closingDate}>
+            <TableCell>{new Date(transaction.closingDate).toLocaleString()}</TableCell>
+            <TableCell>{transaction.couponPerUnit}</TableCell>
+            <TableCell style={{ textAlign: 'center' }}>
+            {transaction.transactionId?
+              <Button variant='contained' style={{ width: '100%' }} onClick={() => { this.props.setModalOpenName(TRANSACTION_MODAL); this.props.setTransactionSelectedId(transaction.transactionId) }}>TRANSACTION DETAILS</Button>:
+              <Button variant='contained' style={{ width: '100%' }} onClick={() => { this.props.setModalOpenName(BOND_BOOK_CLOSE_DETAILS_MODAL); this.props.setCouponPayoutSelectedIndex(index) }}>HOLDERS DETAILS</Button>}
+              {transaction.transactionId?null:
+              <Button variant='contained' style={{ width: '100%' }} onClick={() => { this.props.setModalOpenName(COUPON_PAYOUY_MODAL); this.props.setCouponPayoutSelectedIndex(index) }}>Pay</Button>}
+            </TableCell>
+          </TableRow>)}
         </TableBody>
         <TableFooter>
           <TableRow>
             <TablePagination
-              count={couponPayout.length}
+              count={couponPayouts.length}
               rowsPerPage={rowsPerPage}
               page={page}
               onChangePage={(event, page) => { this.setState({ page }) }}

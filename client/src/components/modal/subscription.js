@@ -9,10 +9,10 @@ import { submitSubscriptionTransaction } from '../../actions/transaction';
 
 const mapStateToProps = (state) => {
   const isOpen = state.view.modalOpenName === NAME
-  const contract = state.asset.subscriptionContract.filter(a => a.id === state.view.subscriptionContractSelectedId)[0]
+  const bond = state.asset.bonds.find(a => a.id === state.view.bondSelectedId) || state.asset.bonds[0]
   const moneyWallets = state.asset.moneyWallets
-  const bondWallets = state.asset.bondWallets.filter(a => a.bond.id === contract.bond.id)
-  return { isOpen, contract, moneyWallets, bondWallets }
+  const bondWallets = state.asset.bondWallets.filter(a => a.bond.id === bond.id)
+  return { isOpen, bond, moneyWallets, bondWallets }
 }
 export const NAME = 'SUBSCRIPTION'
 export default connect(mapStateToProps, { setModalOpenName, submitSubscriptionTransaction, fetchMoneyWallet, fetchBondWallet })(class extends Component {
@@ -24,20 +24,20 @@ export default connect(mapStateToProps, { setModalOpenName, submitSubscriptionTr
   }
 
   componentDidMount() {
-    this.props.fetchMoneyWallet()
-      .then(response => {
-        if (!this.state.moneyWallet) this.setState({ moneyWallet: getSafe(() => this.props.moneyWallets[0].id) })
-      })
-    this.props.fetchBondWallet(this.props.contract.bond.id)
-      .then(response => {
-        if (!this.state.bondWallet) this.setState({ bondWallet: getSafe(() => this.props.bondWallets[0].id) })
-      })
+    // this.props.fetchMoneyWallet()
+    //   .then(response => {
+    //     if (!this.state.moneyWallet) this.setState({ moneyWallet: getSafe(() => this.props.moneyWallets[0].id) })
+    //   })
+    // this.props.fetchBondWallet(this.props.contract.bond.id)
+    //   .then(response => {
+    //     if (!this.state.bondWallet) this.setState({ bondWallet: getSafe(() => this.props.bondWallets[0].id) })
+    //   })
   }
 
   submitHandler = () => {
     this.setState({ isLoading: true })
-    const { contract, contract: { bond } } = this.props
-    this.props.submitSubscriptionTransaction({ bondId: bond.id, subscriptionContract: contract.id, moneyWallet: this.state.moneyWallet, bondWallet: this.state.bondWallet, amount: this.state.amount })
+    const { bond } = this.props
+    this.props.submitSubscriptionTransaction({ bond: bond.id, moneyWallet: this.state.moneyWallet, bondWallet: this.state.bondWallet, amount: this.state.amount })
       .then(response => {
         this.setState({ isLoading: false })
         this.props.setModalOpenName(false)
@@ -45,15 +45,14 @@ export default connect(mapStateToProps, { setModalOpenName, submitSubscriptionTr
   }
 
   render() {
-    const { isOpen, contract, moneyWallets, bondWallets } = this.props
+    const { isOpen, bond, moneyWallets, bondWallets } = this.props
     return !isOpen ? null :
       <Modal open={isOpen} onClose={() => this.props.setModalOpenName(null)}>
         <Paper style={{ position: 'absolute', top: '45%', left: '50%', transform: `translate(-${45}%, -${50}%)`, padding: 20 }}>
           <Grid container justify="center">
             <Grid item sm={12}><Typography variant="title">Bond subscription transaction</Typography></Grid>
-            <Grid item sm={9} style={{ paddingTop: 15 }}><TextField fullWidth label="Subscription contract id" disabled value={contract.id} /></Grid>
-            <Grid item sm={9} style={{ paddingTop: 15 }}><TextField fullWidth label="Symbol" disabled value={contract.bond.symbol} /></Grid>
-            <Grid item sm={9} style={{ paddingTop: 15 }}><TextField fullWidth label="Par Value" disabled value={contract.bond.parValue} /></Grid>
+            <Grid item sm={9} style={{ paddingTop: 15 }}><TextField fullWidth label="Symbol" disabled value={bond.symbol} /></Grid>
+            <Grid item sm={9} style={{ paddingTop: 15 }}><TextField fullWidth label="Par Value" disabled value={bond.parValue} /></Grid>
             <Grid item sm={9} style={{ paddingTop: 15, paddingBottom: 20 }}><TextField fullWidth label="Amount" onChange={(event) => this.setState({ amount: Number(event.target.value) })} /></Grid>
             <Grid item sm={9} style={{ paddingTop: 15, paddingBottom: 20 }}>
               <TextField fullWidth select label="Bond Wallet"
@@ -63,7 +62,7 @@ export default connect(mapStateToProps, { setModalOpenName, submitSubscriptionTr
                 {bondWallets.map(bondWallet => <MenuItem key={bondWallet.id} value={bondWallet.id}>{`${bondWallet.id}`}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid item sm={9} style={{ paddingTop: 15, paddingBottom: 20 }}><TextField fullWidth label="Pay Amount" disabled value={`${Number(contract.bond.parValue * this.state.amount).toLocaleString()} THB`} /></Grid>
+            <Grid item sm={9} style={{ paddingTop: 15, paddingBottom: 20 }}><TextField fullWidth label="Pay Amount" disabled value={`${Number(bond.parValue * this.state.amount).toLocaleString()} THB`} /></Grid>
             <Grid item sm={9} style={{ paddingTop: 15, paddingBottom: 20 }}>
               <TextField fullWidth select label="Pay With: Money Account"
                 value={this.state.moneyWallet}

@@ -1,25 +1,18 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
 
-import { fetchMoneyTransferEvents } from '../../actions/events'
 import { getSafe } from '../../utils'
 import { Table, TableHead, TableBody, TableRow, TableCell, TableFooter, TablePagination, Typography, Tooltip, Grid } from '@material-ui/core';
 
 const mapStateToProps = (state) => {
   const moneyWallet = state.asset.moneyWallets.find((a) => a.id === state.view.moneyWalletSelectedId) || state.asset.moneyWallets[0]
-  const moneyTrahsferEvents = state.event.moneyTransfers.filter(a => a.from === `resource:org.tbma.MoneyWallet#${moneyWallet.id}` || a.to === `resource:org.tbma.MoneyWallet#${moneyWallet.id}`)
+  const moneyTrahsferEvents = state.event.moneyTransfers.filter(a => getSafe(() => a.from.id) === moneyWallet.id || getSafe(() => a.to.id) === moneyWallet.id)
   return {moneyWallet, moneyTrahsferEvents}
 }
 
-export default connect(mapStateToProps, { fetchMoneyTransferEvents })(class extends Component {
+export default connect(mapStateToProps, { })(class extends Component {
   state = {
     page: 0
-  }
-
-  componentDidMount() {
-    if (getSafe(() => this.props.moneyWallet)) {
-      this.props.fetchMoneyTransferEvents(this.props.moneyWallet.id)
-    }
   }
 
   render() {

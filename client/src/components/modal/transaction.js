@@ -7,12 +7,12 @@ export const NAME = 'TRANSACTION'
 export default connect((state) => ({ isOpen: state.view.modalOpenName === NAME, transaction: state.transactions.find(a => a.transactionId === state.view.transactionSelectedId), view: state.view }), { setModalOpenName })(class extends Component {
   render() {
     const transaction = this.props.transaction
-    return (this.props.isOpen ? <Modal open={this.props.isOpen} onClose={() => this.props.setModalOpenName(null)}>
+    return (this.props.isOpen && transaction ? <Modal open={this.props.isOpen} onClose={() => this.props.setModalOpenName(null)}>
       <Paper style={{ position: 'absolute', top: '45%', left: '50%', transform: `translate(-${45}%, -${50}%)`, padding: 20 }}>
         <Typography variant="title">Transaction</Typography>
         <Typography variant="caption" style={{ padding: 10 }}>{transaction.transactionId}</Typography>
         <Grid container justify='center' spacing={16}>
-          <Grid item><Typography variant="subheading">Payment Account</Typography></Grid><Grid item><Typography variant="body2">{transaction.eventsEmitted[0].from.id}</Typography></Grid>
+          <Grid item><Typography variant="subheading">Payment Account</Typography></Grid><Grid item><Typography variant="body2">{transaction.eventsEmitted[0].from.replace('resource:org.tbma.MoneyWallet#', '')}</Typography></Grid>
         </Grid>
         <Table>
           <TableHead>

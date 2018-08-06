@@ -36,16 +36,32 @@ asset MoneyWallet identified by id {
   o Double balance
 }
 
-concept CouponPayoutPerWallet {
+concept Holder {
   --> BondWallet bondWallet
   --> MoneyWallet moneyWallet
-  o Double balance
-  o Double couponAmount
+  --> Account owner
+  o Double amount
 }
 
 concept CouponPayout {
+  o DateTime closingDate
   o Double couponPerUnit
-  o String transactionId
+  o Holder[] holders
+  o String transactionId optional
+  o DateTime paymentDate optional
+}
+
+concept Subscriper {
+  --> BondWallet wallet
+  o Double amount
+}
+
+concept SubscriptionContract {
+  o Subscriper[] subscripers
+  o Boolean isCloseSale default=false
+  o Double hardCap
+  o Double soldAmount default=0.0
+  --> MoneyWallet issuerMoneyWallet
 }
 
 asset Bond identified by id {
@@ -57,9 +73,11 @@ asset Bond identified by id {
   o Integer issueTerm // month
   o DateTime issueDate optional
   o DateTime maturityDate optional
-  o Double totalSupply
+  o Boolean isMature default=false
+  o Double totalSupply default=0.0
+  o CouponPayout[] couponPayouts
   --> Account issuer
-  o CouponPayout[] couponPayout
+  o SubscriptionContract subscriptionContract
 }
 
 asset BondWallet identified by id {
@@ -68,21 +86,6 @@ asset BondWallet identified by id {
   --> Account owner
   o Double balance
   --> MoneyWallet couponWallet
-}
-
-concept Subscriper {
-  --> BondWallet wallet
-  o Double amount
-}
-
-asset BondSubscriptionContract identified by id {
-  o String id
-  --> Bond bond
-  o Subscriper[] subscripers
-  o Boolean isCloseSale default=false
-  o Double hardCap
-  o Double soldAmount default=0.0
-  --> MoneyWallet issuerMoneyWallet
 }
 
 /**
@@ -122,19 +125,24 @@ transaction BondTransferTransaction {
 }
 
 transaction BondSubscriptionTransaction {
-  --> BondSubscriptionContract subscriptionContract
+  --> Bond bond
   --> MoneyWallet moneyWallet
   --> BondWallet bondWallet
   o Double amount
 }
 
 transaction BondSubscriptionCloseSaleTransaction {
-  --> BondSubscriptionContract subscriptionContract
+  --> Bond bond
 }
 
 transaction CouponPayoutTransaction {
   --> Bond bond
   --> MoneyWallet moneyWallet
+  o Integer couponPayoutIndex default=0
+}
+
+transaction CouponSnapTransaction {
+  --> Bond bond
 }
 
 transaction BondBuyBackTransaction {

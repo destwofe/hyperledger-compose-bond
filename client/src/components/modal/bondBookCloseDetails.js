@@ -1,11 +1,11 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
-import { Paper, Modal, Typography, Grid, TextField, Button, CircularProgress, MenuItem } from '@material-ui/core'
+import { Paper, Modal, Typography, Grid, TextField, Button, CircularProgress, Table, TableBody, TableRow, TableCell, TableHead } from '@material-ui/core'
 import { setModalOpenName } from '../../actions/view';
 import { submitCouponPayoutTransaction } from '../../actions/transaction';
 import { getSafe } from '../../utils';
 
-export const NAME = 'COUPON_PAYOUT'
+export const NAME = 'BOND_BOOK_CLOSE_DETAILS'
 export default connect((state) => {
   const isOpen = state.view.modalOpenName === NAME
   const bond = state.asset.bonds.find((a) => a.id === state.view.bondSelectedId) || state.asset.bonds[0]
@@ -33,22 +33,37 @@ export default connect((state) => {
   }
 
   render() {
-    const { moneyWallets, bond, isOpen, couponPayoutSelectedIndex } = this.props
+    const { bond, isOpen, couponPayoutSelectedIndex } = this.props
     const couponPatout = bond.couponPayouts[couponPayoutSelectedIndex]
     return !isOpen ? null :
       <Modal open={isOpen} onClose={() => this.props.setModalOpenName(null)}>
-        <Paper style={{ position: 'absolute', top: '45%', left: '50%', transform: `translate(-${45}%, -${50}%)`, padding: 20 }}>
+        <Paper style={{ position: 'absolute', top: '45%', left: '30%', transform: `translate(-${20}%, -${50}%)`, padding: 20 }}>
           <Grid container justify="center">
-            <Grid item sm={12}><Typography variant="title">Coupon Payout</Typography></Grid>
+            <Grid item sm={12}><Typography variant="title">BOND BOOK CLOSE DETAILS</Typography></Grid>
             <Grid item sm={9} style={{ paddingTop: 15 }}><TextField fullWidth label="Bond" disabled value={`${bond.symbol} (${bond.id})`} /></Grid>
             <Grid item sm={9} style={{ paddingTop: 15 }}><TextField fullWidth label="Book Closing Time" disabled value={`${getSafe(() => new Date(couponPatout.closingDate))}`} /></Grid>
-            <Grid item sm={9} style={{ paddingTop: 15 }}>
-              <TextField fullWidth select label="Pay With: Money Account"
-                value={this.state.moneyWallet}
-                helperText={`balance ${getSafe(() => Number(moneyWallets.find(a => a.id === this.state.moneyWallet).balance).toLocaleString()) || 0} THB`}
-                onChange={(event) => this.setState({ moneyWallet: event.target.value })} >
-                {moneyWallets.map(moneyWallet => <MenuItem key={moneyWallet.id} value={moneyWallet.id}>{`${moneyWallet.id}`}</MenuItem>)}
-              </TextField>
+
+            <Grid item sm={11} style={{ paddingTop: 15, paddingLeft: 0, paddingRight: 0, overflowX: 'auto' }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Owner</TableCell>
+                    <TableCell>Held Amount</TableCell>
+                    <TableCell>Pay Amount</TableCell>
+                    <TableCell>Depository Account</TableCell>
+                    <TableCell>Bank Account</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {couponPatout.holders.map(holder => <TableRow key={holder.bondWallet.id}>
+                    <TableCell>{getSafe(() => holder.owner.name) || 'Permission denined'}</TableCell>
+                    <TableCell>{Number(holder.amount).toLocaleString()} unit</TableCell>
+                    <TableCell>{Number(holder.amount * couponPatout.couponPerUnit).toLocaleString()} THB</TableCell>
+                    <TableCell>{getSafe(() => holder.bondWallet.id) || holder.bondWaller.replace('resource:org.tbma.BondWallet#', '')}</TableCell>
+                    <TableCell>{getSafe(() => holder.moneyWallet.id) || holder.moneyWallet.replace('resource:org.tbma.MoneyWallet#', '')}</TableCell>
+                  </TableRow>)}
+                </TableBody>
+              </Table>
             </Grid>
           </Grid>
           <Grid container justify="center" spacing={32} style={{ paddingTop: 20 }}>

@@ -29,7 +29,6 @@ rules:
         - args: none
     no-console: off
     curly: error
-    eqeqeq: error
     no-throw-literal: error
     dot-notation: error
     no-tabs: error

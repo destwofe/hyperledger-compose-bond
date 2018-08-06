@@ -14,7 +14,7 @@ export default (state = initialState, action) => {
       Axios.defaults.headers = { accessToken: null }
       return initialState
     case 'persist/REHYDRATE':
-      Axios.defaults.headers = { accessToken: getSafe(() => action.payload.account.accessToken) }
+      Axios.defaults.headers = { authorization: `Bearer ${getSafe(() => action.payload.account.accessToken)}` }
       return state
     default:
       return state

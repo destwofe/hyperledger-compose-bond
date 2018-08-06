@@ -2,31 +2,31 @@ import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import { Table, TableBody, TableRow, TableCell, Card, CardContent, Typography, Grid, Button, TableFooter, CircularProgress, TablePagination, TableHead, TextField } from '@material-ui/core'
 
-import { fetchBondWallet } from '../../actions/asset'
+import { bondWalletsPage } from '../../actions/graph'
 import { setBondWalletSelectedId, setModalOpenName } from '../../actions/view'
 import { CREATE_BOND_WALLET_NAME } from '../modal'
 
-export default connect((state) => ({ bondWallets: state.asset.bondWallets, role: state.account.accountData.role }), { setBondWalletSelectedId, fetchBondWallet, setModalOpenName })(class extends Component {
+export default connect((state) => ({ bondWallets: state.asset.bondWallets, role: state.account.accountData.role }), { setBondWalletSelectedId, bondWalletsPage, setModalOpenName })(class extends Component {
   state = {
     page: 0,
     isLoading: false,
-    filteredBondWallets: this.props.bondWallets
+    filter: ''
   }
 
   componentDidMount() {
-    this.props.fetchBondWallet()
+    this.props.bondWalletsPage()
   }
 
   handlerFilterChange = (event) => {
     const value = event.target.value
-    this.setState({filteredBondWallets: this.props.bondWallets.filter(a => a.bond.symbol.toLowerCase().indexOf(value) !== -1)})
+    this.setState({ filter: value })
   }
 
   render() {
-    const rowsPerPage = 10
+    const rowsPerPage = 5
     const page = this.state.page
     const { role, bondWallets } = this.props
-    const filteredBondWallets = this.state.filteredBondWallets
+    const filteredBondWallets = this.props.bondWallets.filter(a => a.bond.symbol.toLowerCase().indexOf(this.state.filter) !== -1)
     return <Table>
       {bondWallets.length <= 0 ? null : <TableHead>
           <TableRow>
