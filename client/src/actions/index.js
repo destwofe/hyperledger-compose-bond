@@ -1,6 +1,7 @@
 import Axios from 'axios'
 import { NotificationManager } from 'react-notifications'
 import { store } from '../store'
+import { getSafe } from '../utils';
 
 export const BASE_URL = 'http://localhost:3335'
 export const AUTHORIZE_FAIL = 'AUTHORIZE_FAIL'
@@ -21,6 +22,9 @@ Axios.interceptors.response.use((response) => {
 }, (error) => {
   store.dispatch({type: GLOBAL_LOGING_STOP})
   if (error) {
-    NotificationManager.error(error.response || error.toString(), error.message)
+    const errorMessage = getSafe(() => error.response.data[Object.keys(error.response.data)[0]]) || error.toString()
+    const errorTitle = getSafe(() => error.message.toString()) || 'Unexpected Error'
+    NotificationManager.error(errorMessage, errorTitle)
+    return Promise.reject(error)
   }
 })

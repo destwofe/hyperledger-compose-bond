@@ -4,8 +4,6 @@ import { push } from 'react-router-redux'
 import { BASE_URL } from './index'
 import { tabChange } from './view';
 
-import { NotificationManager } from 'react-notifications'
-
 export const LOGIN_SUCCESS = 'LOGIN_SUCCESS'
 export const requestLogin = (username) => (dispatch) =>
   Axios.get(`${BASE_URL}/api/accounts`, {headers: {authorization: `Bearer ${username}`}})
@@ -26,7 +24,6 @@ export const requestLogin = (username) => (dispatch) =>
     }
     return response.data
   })
-  .catch(error => NotificationManager.error(error.toString(), 'Login error'))
 
 export const LOGOUT_SUCCESS = 'LOGOUT_SUCCESS'
 export const requestLogout = () => (dispatch, getState) => {
@@ -36,6 +33,6 @@ export const requestLogout = () => (dispatch, getState) => {
       type: LOGOUT_SUCCESS
     })
   } catch (error) {
-    NotificationManager.error(error.toString(), 'Logout error')
+    // NotificationManager.error(error.toString(), 'Logout error')
   }
 }

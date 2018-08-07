@@ -35,6 +35,9 @@ class BondNetwork {
     this.identityRegistry = await this.connection.getIdentityRegistry()
     this.historian = await this.connection.getHistorian()
     // this.identity = await this.getCardParticipantIdentity()
+
+    // test
+    this.connection.getRegistry('org.hyperledger.composer.system.HistorianRecord').then(registry => registry.getAll()).then(console.log)
   }
 
   async getCardParticipantIdentity() {

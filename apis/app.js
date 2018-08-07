@@ -29,10 +29,14 @@ app.listen(PORT, (err) => {
   logger.info(`server listern on ${PORT}`)
 })
 
-// // create bond network connection instance
-// const BondNetwork = require('./BoneNetwork')
-// const bondNetwork = new BondNetwork ()
-// bondNetwork.init('admin@bond').then(() => {
-//   module.exports.bondNetwork = bondNetwork
-//   logger.info('Bond network connected')
-// })
+// Event listerner
+// create bond network connection instance
+const BondNetwork = require('./BondNetwork')
+const bondNetwork = new BondNetwork()
+bondNetwork.init('admin@bond').then(() => {
+  // module.exports.bondNetwork = bondNetwork
+  logger.info('Bond network connected')
+})
+bondNetwork.connection.on('event', (event) => {
+  console.log({ event: bondNetwork.serializer.toJSON(event) })
+})
