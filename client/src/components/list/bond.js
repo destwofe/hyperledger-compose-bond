@@ -38,7 +38,7 @@ export default connect((state) => ({ bonds: state.asset.bonds, role: state.accou
     const page = this.state.page
 
     const {bonds, role} = this.props
-    const filteredBonds = bonds.filter(a => a.symbol.toLowerCase().indexOf(this.state.filter) !== -1 || getSafe(() => a.issuer.name.toLowerCase().indexOf(this.state.filter)) !== -1 )
+    const filteredBonds = bonds.filter(a => a.symbol.toLowerCase().indexOf(this.state.filter.toLowerCase()) !== -1 || getSafe(() => a.issuer.name.toLowerCase().indexOf(this.state.filter.toLocaleLowerCase())) !== -1 )
     return (<Table>
       {bonds.length <= 0 ? null : <TableHead>
         <TableRow>
@@ -53,8 +53,10 @@ export default connect((state) => ({ bonds: state.asset.bonds, role: state.accou
             <TableCell style={{ padding: 0 }}>
               <Card style={{ margin: 0 }}>
                 <CardContent style={{ paddingBottom: 0 }}>
-                  <Typography variant="headline" style={{ float: 'left', paddingRight: 10 }}>{bond.symbol}</Typography>
-                  <Typography variant="caption" style={{ float: 'inline-end' }}>{bond.id}</Typography>
+                <Grid container direction='column'>
+                  <Grid item><Typography variant="headline" style={{ float: 'left', paddingRight: 10 }}>{bond.symbol}</Typography></Grid>
+                  <Grid item><Typography variant="caption" style={{ float: 'inline-end' }}>{bond.id}</Typography></Grid>
+                </Grid>
                 </CardContent>
                 <CardActions style={{ paddingTop: 0, paddingBottom: 0 }}>
                   <Typography variant="caption" style={{ paddingLeft: 12 }}>{getSafe(() => bond.issuer.name) || 'permission denined'}</Typography>

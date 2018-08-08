@@ -14,8 +14,9 @@ export default connect((state) => ({ bond: state.asset.bonds.find((a) => a.id ==
   }
 
   componentDidMount() {
-    if (getSafe(() => this.props.bond.couponPayout.length) > 0) {
-      this.props.fetchTransaction(this.props.bond.couponPayout.map(a => a.transactionId))
+    console.log(this.props.bond)
+    if (getSafe(() => this.props.bond.couponPayouts.length) > 0) {
+      this.props.fetchTransaction(this.props.bond.couponPayouts.map(a => a.transactionId))
     }
   }
 
@@ -35,7 +36,7 @@ export default connect((state) => ({ bond: state.asset.bonds.find((a) => a.id ==
             <TableCell>{transaction.couponPerUnit}</TableCell>
             <TableCell style={{ textAlign: 'center' }}>
             {transaction.transactionId?
-              <Button variant='contained' style={{ width: '100%' }} onClick={() => { this.props.setModalOpenName(TRANSACTION_MODAL); this.props.setTransactionSelectedId(transaction.transactionId) }}>TRANSACTION DETAILS</Button>:
+              <Button variant='contained' style={{ width: '100%' }} onClick={() => { this.props.setModalOpenName(TRANSACTION_MODAL); this.props.setTransactionSelectedId(transaction.transactionId); this.props.setCouponPayoutSelectedIndex(index) }}>TRANSACTION DETAILS</Button>:
               <Button variant='contained' style={{ width: '100%' }} onClick={() => { this.props.setModalOpenName(BOND_BOOK_CLOSE_DETAILS_MODAL); this.props.setCouponPayoutSelectedIndex(index) }}>HOLDERS DETAILS</Button>}
               {transaction.transactionId?null:
               <Button variant='contained' style={{ width: '100%' }} onClick={() => { this.props.setModalOpenName(COUPON_PAYOUY_MODAL); this.props.setCouponPayoutSelectedIndex(index) }}>Pay</Button>}

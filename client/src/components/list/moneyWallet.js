@@ -36,8 +36,11 @@ export default connect((state) => ({ moneyWallets: state.asset.moneyWallets }), 
                 <CardContent>
                   <Grid container justify="flex-start">
                     <Grid item sm={12}><Typography variant="body1" color="textSecondary">{moneyWallet.id}</Typography></Grid>
-                    <Grid item sm><Typography variant="subheading" color="textSecondary">Balance :</Typography></Grid>
-                    <Grid item sm><Typography variant="subheading">{Number(moneyWallet.balance).toLocaleString()} THB</Typography></Grid>
+                    <Grid item sm={4}><Typography variant="subheading" color="textSecondary">Owner :</Typography></Grid>
+                    <Grid item sm={6}><Typography variant="subheading">{moneyWallet.owner.name}</Typography></Grid>
+                    <Grid item sm={4}><Typography variant="subheading" color="textSecondary">Balance :</Typography></Grid>
+                    <Grid item sm={6}><Typography variant="subheading">{Number(moneyWallet.balance).toLocaleString()} THB</Typography></Grid>
+                    
                   </Grid>
                 </CardContent>
               </Card>

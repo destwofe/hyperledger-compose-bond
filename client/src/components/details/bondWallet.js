@@ -16,7 +16,7 @@ export default connect((state) => ({ bondWallet: state.asset.bondWallets.find((a
           <CardContent>
             <Table>
               <TableBody>
-                <TableRow><TableCell variant="head">Bond</TableCell><TableCell>{bondWallet.bond.symbol}</TableCell><TableCell variant="head">Balance</TableCell><TableCell>{Number(bondWallet.balance).toLocaleString()} THB</TableCell></TableRow>
+                <TableRow><TableCell variant="head">Bond</TableCell><TableCell>{bondWallet.bond.symbol}</TableCell><TableCell variant="head">Balance</TableCell><TableCell>{Number(bondWallet.balance).toLocaleString()} unit</TableCell></TableRow>
                 <TableRow><TableCell variant="head">Owner id</TableCell><TableCell>{bondWallet.owner.id}</TableCell><TableCell variant="head">Owner name</TableCell><TableCell>{bondWallet.owner.name}</TableCell></TableRow>
               </TableBody>
             </Table>

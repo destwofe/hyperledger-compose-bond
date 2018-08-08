@@ -29,10 +29,10 @@ export default connect(mapStateToProps, { fetchBondWallet })(class extends Compo
     return getSafe(() => wallets.length) > 0 ? (
       <Table>
         <TableHead>
-          <TableRow><TableCell>ID</TableCell><TableCell>Owner</TableCell><TableCell>Balance</TableCell><TableCell>Money Account</TableCell></TableRow>
+          <TableRow><TableCell>ID</TableCell><TableCell>Owner</TableCell><TableCell>Balance</TableCell><TableCell>Bank Account</TableCell></TableRow>
         </TableHead>
         <TableBody>
-          {wallets.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(wallet => <TableRow key={wallet.id}><TableCell>{wallet.id}</TableCell><TableCell>{wallet.owner.name}</TableCell><TableCell>{wallet.balance}</TableCell><TableCell>{getSafe(() => wallet.couponWallet.replace('resource:org.tbma.MoneyWallet#', '')) || getSafe(() => wallet.couponWallet.id)}</TableCell></TableRow>)}
+          {wallets.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(wallet => <TableRow key={wallet.id}><TableCell>{wallet.id}</TableCell><TableCell>{wallet.owner.name}</TableCell><TableCell>{Number(wallet.balance).toLocaleString()} unit</TableCell><TableCell>{getSafe(() => wallet.couponWallet.replace('resource:org.tbma.MoneyWallet#', '')) || getSafe(() => wallet.couponWallet.id)}</TableCell></TableRow>)}
         </TableBody>
         <TableFooter>
           <TableRow>

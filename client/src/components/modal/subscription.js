@@ -55,7 +55,7 @@ export default connect(mapStateToProps, { setModalOpenName, submitSubscriptionTr
             <Grid item sm={9} style={{ paddingTop: 15 }}><TextField fullWidth label="Par Value" disabled value={bond.parValue} /></Grid>
             <Grid item sm={9} style={{ paddingTop: 15, paddingBottom: 20 }}><TextField fullWidth label="Amount" onChange={(event) => this.setState({ amount: Number(event.target.value) })} /></Grid>
             <Grid item sm={9} style={{ paddingTop: 15, paddingBottom: 20 }}>
-              <TextField fullWidth select label="Bond Wallet"
+              <TextField fullWidth select label="Bond Receive: Depository Account"
                 value={this.state.bondWallet}
                 helperText={`balance ${getSafe(() => Number(bondWallets.find(a => a.id === this.state.bondWallet).balance).toLocaleString()) || 0} Unit`}
                 onChange={(event) => this.setState({ bondWallet: event.target.value })} >
@@ -64,7 +64,7 @@ export default connect(mapStateToProps, { setModalOpenName, submitSubscriptionTr
             </Grid>
             <Grid item sm={9} style={{ paddingTop: 15, paddingBottom: 20 }}><TextField fullWidth label="Pay Amount" disabled value={`${Number(bond.parValue * this.state.amount).toLocaleString()} THB`} /></Grid>
             <Grid item sm={9} style={{ paddingTop: 15, paddingBottom: 20 }}>
-              <TextField fullWidth select label="Pay With: Money Account"
+              <TextField fullWidth select label="Pay With: Bank Account"
                 value={this.state.moneyWallet}
                 helperText={`balance ${getSafe(() => Number(moneyWallets.find(a => a.id === this.state.moneyWallet).balance).toLocaleString()) || 0} THB`}
                 onChange={(event) => this.setState({ moneyWallet: event.target.value })} >

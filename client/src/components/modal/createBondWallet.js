@@ -27,9 +27,9 @@ export default connect((state) => ({ isOpen: state.view.modalOpenName === NAME, 
       <Modal open={this.props.isOpen} onClose={() => this.props.setModalOpenName(null)}>
         <Paper style={{ position: 'absolute', top: '45%', left: '50%', transform: `translate(-${45}%, -${50}%)`, padding: 20 }}>
           <Grid container justify="center">
-            <Grid item sm={12}><Typography variant="title">Create Bond Wallet</Typography></Grid>
+            <Grid item sm={12}><Typography variant="title">Create Depository Account</Typography></Grid>
             <Grid item sm={9} style={{ paddingTop: 15 }}><TextField fullWidth select label="Bond" value={this.state.bond} helperText={`id: ${this.state.bond}`} onChange={(event) => this.setState({ bond: event.target.value })}>{this.props.bonds.map(bond => <MenuItem key={bond.id} value={bond.id}>{`${bond.symbol}`}</MenuItem>)}</TextField></Grid>
-            <Grid item sm={9} style={{ paddingTop: 15 }}><TextField fullWidth select label="Coupon receive wallet" value={this.state.couponWallet} helperText={`balance ${getSafe(() => Number(this.props.moneyWallets.find(a => a.id === this.state.couponWallet).balance).toLocaleString()) || 0} THB`} onChange={(event) => this.setState({ couponWallet: event.target.value })}>{this.props.moneyWallets.map(moneyWallet => <MenuItem key={moneyWallet.id} value={moneyWallet.id}>{`${moneyWallet.id}`}</MenuItem>)}</TextField></Grid>
+            <Grid item sm={9} style={{ paddingTop: 15 }}><TextField fullWidth select label="Coupon receive: Bank Account" value={this.state.couponWallet} helperText={`balance ${getSafe(() => Number(this.props.moneyWallets.find(a => a.id === this.state.couponWallet).balance).toLocaleString()) || 0} THB`} onChange={(event) => this.setState({ couponWallet: event.target.value })}>{this.props.moneyWallets.map(moneyWallet => <MenuItem key={moneyWallet.id} value={moneyWallet.id}>{`${moneyWallet.id}`}</MenuItem>)}</TextField></Grid>
             <Grid item sm={9} style={{ paddingTop: 15 }}><TextField disabled fullWidth label="Amount" value={`0 (unit)`} /></Grid>
           </Grid>
           <Grid container justify="center" spacing={32} style={{ paddingTop: 20 }}>

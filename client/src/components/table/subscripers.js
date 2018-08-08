@@ -24,7 +24,7 @@ export default connect(mapStateToProps, { fetchBondWallet })(class extends Compo
     return getSafe(() => subscripers.length) > 0 ? (
       <Table>
         <TableHead>
-          <TableRow><TableCell>Owner</TableCell><TableCell>Amount</TableCell><TableCell>Bond Wallet</TableCell></TableRow>
+          <TableRow><TableCell>Owner</TableCell><TableCell>Amount</TableCell><TableCell>Depository Account</TableCell></TableRow>
         </TableHead>
         <TableBody>
           {subscripers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(subscrpier =>

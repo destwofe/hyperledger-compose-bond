@@ -26,7 +26,7 @@ export default connect((state) => ({ bondWallets: state.asset.bondWallets, role:
     const rowsPerPage = 5
     const page = this.state.page
     const { role, bondWallets } = this.props
-    const filteredBondWallets = this.props.bondWallets.filter(a => a.bond.symbol.toLowerCase().indexOf(this.state.filter) !== -1)
+    const filteredBondWallets = this.props.bondWallets.filter(a => a.bond.symbol.toLowerCase().indexOf(this.state.filter.toLowerCase()) !== -1)
     return <Table>
       {bondWallets.length <= 0 ? null : <TableHead>
           <TableRow>
@@ -45,8 +45,10 @@ export default connect((state) => ({ bondWallets: state.asset.bondWallets, role:
                     <Grid item sm={12}><Typography variant="body1" color="textSecondary">{bondWallet.id}</Typography></Grid>
                     <Grid item sm={4}><Typography variant="subheading" color="textSecondary">Bond :</Typography></Grid>
                     <Grid item sm={6}><Typography variant="subheading">{bondWallet.bond.symbol}</Typography></Grid>
+                    <Grid item sm={4}><Typography variant="subheading" color="textSecondary">Owner :</Typography></Grid>
+                    <Grid item sm={6}><Typography variant="subheading">{bondWallet.owner.name}</Typography></Grid>
                     <Grid item sm={4}><Typography variant="subheading" color="textSecondary">Balance :</Typography></Grid>
-                    <Grid item sm={6}><Typography variant="subheading">{Number(bondWallet.balance).toLocaleString()} Unit</Typography></Grid>
+                    <Grid item sm={6}><Typography variant="subheading">{Number(bondWallet.balance).toLocaleString()} unit</Typography></Grid>
                   </Grid>
                 </CardContent>
               </Card>

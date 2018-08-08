@@ -78,13 +78,13 @@ export default connect(mapStateToProps, { setModalOpenName, submitSubscriptionCl
             <Grid item><Button style={{ paddingTop: 0, paddingBottom: 0 }} onClick={() => this.handlerCollapse('coupon')}><Grid container alignItems='center'><Grid item><Typography variant="subheading">Book closing reports</Typography></Grid><Grid item><Typography variant='caption'>{this.state.isBondCouponPayoutTransactionCollapseOpen ? <ExpandLess style={{ padding: 0 }} /> : <ExpandMore style={{ padding: 0 }} />}</Typography></Grid></Grid></Button></Grid>
           </Grid>
           <Collapse in={this.state.isSubscriptionContractCollapseOpen}>
-            <SubscriptionContract contract={contract} role={role} accountId={accountId} bond={bond} setModalOpenName={this.props.setModalOpenName} submitSubscriptionCloseSaleTransaction={this.props.submitSubscriptionCloseSaleTransaction} />
+            {this.state.isSubscriptionContractCollapseOpen ? <SubscriptionContract contract={contract} role={role} accountId={accountId} bond={bond} setModalOpenName={this.props.setModalOpenName} submitSubscriptionCloseSaleTransaction={this.props.submitSubscriptionCloseSaleTransaction} /> : null}
           </Collapse>
           <Collapse in={this.state.isBondHoldersCollapseOpen}>
-            <BondHoldersTable />
+            {this.state.isBondHoldersCollapseOpen ? <BondHoldersTable /> : null}
           </Collapse>
           <Collapse in={this.state.isBondCouponPayoutTransactionCollapseOpen}>
-            <BondCouponPayoutTransactionsTable />
+            {this.state.isBondCouponPayoutTransactionCollapseOpen ? <BondCouponPayoutTransactionsTable /> : null}
           </Collapse>
         </CardContent>
         {getSafe(() => bond.issuer.id) !== accountId || bond.isMature ? null : <CardActions style={{ borderTopStyle: 'ridge' }}>

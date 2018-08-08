@@ -43,7 +43,7 @@ export default connect((state) => {
             <Grid item sm={9} style={{ paddingTop: 15 }}><TextField fullWidth label="Bond" disabled value={`${bond.symbol} (${bond.id})`} /></Grid>
             <Grid item sm={9} style={{ paddingTop: 15 }}><TextField fullWidth label="Book Closing Time" disabled value={`${getSafe(() => new Date(couponPatout.closingDate))}`} /></Grid>
             <Grid item sm={9} style={{ paddingTop: 15 }}>
-              <TextField fullWidth select label="Pay With: Money Account"
+              <TextField fullWidth select label="Pay With: Bank Account"
                 value={this.state.moneyWallet}
                 helperText={`balance ${getSafe(() => Number(moneyWallets.find(a => a.id === this.state.moneyWallet).balance).toLocaleString()) || 0} THB`}
                 onChange={(event) => this.setState({ moneyWallet: event.target.value })} >
