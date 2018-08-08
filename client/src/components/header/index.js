@@ -12,6 +12,12 @@ export default connect((state) => ({ view: state.view, role: state.account.accou
     anchorEl: null
   }
 
+  getRoleName = (role) => {
+    if (role.isInvestor) return 'investor'
+    if (role.isIssuer) return 'issuer'
+    if (role.isGateway) return 'gateway'
+  }
+
   render() {
     const { role, accountData } = this.props
     return <div>
@@ -21,7 +27,8 @@ export default connect((state) => ({ view: state.view, role: state.account.accou
             Bond Book
           </Typography>
           <Typography variant="title" color="inherit">
-          {accountData.name}
+            {accountData.name}
+            {` (${this.getRoleName(role)})`}
           </Typography>
           <IconButton onClick={(event) => this.setState({ anchorEl: event.currentTarget })} color="inherit">
             <AccountCircle />

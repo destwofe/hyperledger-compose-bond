@@ -32,13 +32,11 @@ class BondNetwork {
     this.definition = await this.connection.connect(cardName)
     this.serializer = this.definition.getSerializer()
     this.factory = this.definition.getFactory()
-    this.identityRegistry = await this.connection.getIdentityRegistry()
-    this.historian = await this.connection.getHistorian()
-    // this.identity = await this.getCardParticipantIdentity()
   }
 
   async getCardParticipantIdentity() {
-    const identities = await this.identityRegistry.getAll() // TODO
+    const identityRegistry = await this.connection.getIdentityRegistry()
+    const identities = await identityRegistry.getAll() // TODO
     const cardName = this.connection.getCard().metadata.userName
     const identity = identities.filter(x => x.name === cardName)[0]
     return identity // .participant['$identifier']
@@ -151,10 +149,11 @@ class BondNetwork {
 
   async getHistorians({ id = null, resolve = false }) {
     try {
-      if (id && resolve) return this.historian.resolve(id)
-      if (id) return this.historian.get(id)
-      if (resolve) return this.historian.resolveAll()
-      return this.historian.getAll()
+      const historianRegistry = await this.connection.getHistorian()
+      if (id && resolve) return historianRegistry.resolve(id)
+      if (id) return historianRegistry.get(id)
+      if (resolve) return historianRegistry.resolveAll()
+      return historianRegistry.getAll()
     } catch (error) {
       return Promise.reject(new Error(error.details))
     }

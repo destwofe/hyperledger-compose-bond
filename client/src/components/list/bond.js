@@ -49,10 +49,10 @@ export default connect((state) => ({ bonds: state.asset.bonds, role: state.accou
       </TableHead>}
       {bonds.length <= 0 ? null : <TableBody>
         {filteredBonds.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(bond =>
-          <TableRow key={bond.id} style={{ height: 0 }} onClick={() => this.props.setBondSelectedId(bond.id)}>
+          <TableRow key={bond.id} style={{ height: 0 }}>
             <TableCell style={{ padding: 0 }}>
               <Card style={{ margin: 0 }}>
-                <CardContent style={{ paddingBottom: 0 }}>
+                <CardContent style={{ paddingBottom: 0 }} onClick={() => this.props.setBondSelectedId(bond.id)}>
                 <Grid container direction='column'>
                   <Grid item><Typography variant="headline" style={{ float: 'left', paddingRight: 10 }}>{bond.symbol}</Typography></Grid>
                   <Grid item><Typography variant="caption" style={{ float: 'inline-end' }}>{bond.id}</Typography></Grid>

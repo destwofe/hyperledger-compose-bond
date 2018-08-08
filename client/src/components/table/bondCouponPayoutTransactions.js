@@ -14,7 +14,6 @@ export default connect((state) => ({ bond: state.asset.bonds.find((a) => a.id ==
   }
 
   componentDidMount() {
-    console.log(this.props.bond)
     if (getSafe(() => this.props.bond.couponPayouts.length) > 0) {
       this.props.fetchTransaction(this.props.bond.couponPayouts.map(a => a.transactionId))
     }
